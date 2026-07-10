@@ -210,7 +210,7 @@ function SidebarGroup({
 }
 
 // ─── Main Sidebar ────────────────────────────────────────────
-export default function Sidebar() {
+export default function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean; setIsOpen?: (v: boolean) => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -241,7 +241,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sidebar animate-slide-left">
+    <aside className={`sidebar animate-slide-left ${isOpen ? "open" : ""}`}>
       {/* Logo */}
       <Link href="/" className="sidebar-logo">
         <div

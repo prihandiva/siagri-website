@@ -1,7 +1,6 @@
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/lib/auth";
-import Sidebar from "@/components/layout/Sidebar";
-import Topbar from "@/components/layout/Topbar";
+import DashboardWrapper from "@/components/layout/DashboardWrapper";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
@@ -17,15 +16,9 @@ export default async function DashboardLayout({
 
   return (
     <SessionProvider session={session}>
-      <div className="layout-wrapper">
-        <Sidebar />
-        <div className="main-content">
-          <Topbar />
-          <main className="page-content animate-fade-in">
-            {children}
-          </main>
-        </div>
-      </div>
+      <DashboardWrapper>
+        {children}
+      </DashboardWrapper>
     </SessionProvider>
   );
 }

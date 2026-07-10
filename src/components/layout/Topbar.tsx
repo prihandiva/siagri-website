@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Bell, ChevronDown, MapPin, LogOut, Clock } from "lucide-react";
+import { Bell, ChevronDown, MapPin, LogOut, Clock, Menu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 
@@ -44,7 +44,7 @@ function useWaktuIndonesia() {
   return { waktu, tanggal };
 }
 
-export default function Topbar() {
+export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession();
   const [selectedDesa, setSelectedDesa] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -71,6 +71,14 @@ export default function Topbar() {
 
   return (
     <header className="topbar">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden mr-2 p-2 rounded-md hover:bg-gray-100 text-gray-500"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Filter Wilayah / Desa */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <MapPin size={15} style={{ color: "var(--primary-700)", flexShrink: 0 }} />
