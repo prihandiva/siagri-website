@@ -60,7 +60,10 @@ export async function createLahan(data: any) {
     await db.trx_lahan.create({
       data: {
         id_petani: BigInt(data.id_petani),
+        id_desa: data.id_desa ? BigInt(data.id_desa) : null,
         id_dusun: data.id_dusun ? BigInt(data.id_dusun) : null,
+        id_rw: data.id_rw ? BigInt(data.id_rw) : null,
+        id_rt: data.id_rt ? BigInt(data.id_rt) : null,
         kode_lahan: data.kode_lahan,
         nama_lahan: data.nama_lahan || null,
         luas_lahan: parseFloat(data.luas_lahan),
@@ -86,7 +89,10 @@ export async function updateLahan(id: string, data: any) {
       where: { id_lahan: BigInt(id) },
       data: {
         id_petani: BigInt(data.id_petani),
+        id_desa: data.id_desa ? BigInt(data.id_desa) : null,
         id_dusun: data.id_dusun ? BigInt(data.id_dusun) : null,
+        id_rw: data.id_rw ? BigInt(data.id_rw) : null,
+        id_rt: data.id_rt ? BigInt(data.id_rt) : null,
         kode_lahan: data.kode_lahan,
         nama_lahan: data.nama_lahan || null,
         luas_lahan: parseFloat(data.luas_lahan),

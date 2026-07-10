@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Edit2, Trash2 } from 'lucide-react';
 import { createPoktan, updatePoktan, deletePoktan } from './actions';
+import { WilayahSelector } from '@/components/ui/WilayahSelector';
 
 export default function PoktanClient({ 
   initialData, 
@@ -32,6 +33,7 @@ export default function PoktanClient({
     id_gapoktan: '',
     kode_poktan: '', 
     nama_poktan: '', 
+    id_ketua: '',
     ketua_poktan: '',
     kelas_kemampuan: '',
     tahun_berdiri: '',
@@ -40,10 +42,23 @@ export default function PoktanClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const desaOpts = options.desa.map(d => ({ 
-    label: `${d.nama_desa} (${d.kecamatan?.nama_kecamatan})`, 
-    value: d.id_desa 
-  }));
+  const [petaniOpts, setPetaniOpts] = useState<{label: string, value: string, text: string}[]>([]);
+
+  React.useEffect(() => {
+    if (formData.id_desa) {
+      fetch(`/api/petani?id_desa=${formData.id_desa}`)
+        .then(res => res.json())
+        .then(data => {
+          setPetaniOpts(data.map((p: any) => ({
+            label: `${p.nama_lengkap}${p.nik ? ` - ${p.nik}` : ''}`,
+            value: p.id_petani.toString(),
+            text: p.nama_lengkap
+          })));
+        });
+    } else {
+      setPetaniOpts([]);
+    }
+  }, [formData.id_desa]);
 
   // Dependent gapoktan options based on selected desa
   const gapoktanOpts = options.gapoktan
@@ -81,6 +96,7 @@ export default function PoktanClient({
         id_gapoktan: item.id_gapoktan || '',
         kode_poktan: item.kode_poktan,
         nama_poktan: item.nama_poktan,
+        id_ketua: item.id_ketua?.toString() || '',
         ketua_poktan: item.ketua_poktan || '',
         kelas_kemampuan: item.kelas_kemampuan || '',
         tahun_berdiri: item.tahun_berdiri || '',
@@ -89,10 +105,11 @@ export default function PoktanClient({
     } else {
       setSelectedItem(null);
       setFormData({ 
-        id_desa: desaOpts.length > 0 ? desaOpts[0].value : '',
+        id_desa: '',
         id_gapoktan: '',
         kode_poktan: '', 
         nama_poktan: '', 
+        id_ketua: '',
         ketua_poktan: '',
         kelas_kemampuan: '',
         tahun_berdiri: '',
@@ -212,14 +229,15 @@ export default function PoktanClient({
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           
           <div className="grid grid-cols-2 gap-6">
-            <Select 
-              label="Wilayah Desa" 
-              options={desaOpts}
-              value={formData.id_desa}
-              onChange={e => setFormData({...formData, id_desa: e.target.value, id_gapoktan: ''})} // Reset gapoktan if desa changes
-              required
-              placeholder="Pilih Desa"
-            />
+            <div className="col-span-2">
+              <WilayahSelector
+                initialValues={{ id_desa: formData.id_desa }}
+                onDesaChange={val => setFormData({...formData, id_desa: val, id_gapoktan: ''})}
+                showDusun={false}
+                showRw={false}
+                showRt={false}
+              />
+            </div>
             <Select 
               label="Tergabung dalam Gapoktan" 
               options={gapoktanOptsWithEmpty}
@@ -246,11 +264,15 @@ export default function PoktanClient({
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <Input 
-              label="Nama Ketua Poktan" 
-              value={formData.ketua_poktan} 
-              onChange={e => setFormData({...formData, ketua_poktan: e.target.value})}
-              placeholder="Nama lengkap ketua"
+            <Select 
+              label="Ketua Poktan" 
+              options={petaniOpts.length > 0 ? [{label: '-- Pilih Ketua --', value: ''}, ...petaniOpts] : [{label: '-- Pilih Desa Dahulu --', value: ''}]}
+              value={formData.id_ketua} 
+              onChange={e => {
+                const opt = petaniOpts.find(p => p.value === e.target.value);
+                setFormData({...formData, id_ketua: e.target.value, ketua_poktan: opt ? opt.text : ''});
+              }}
+              disabled={!formData.id_desa || petaniOpts.length === 0}
             />
             <Select 
               label="Kelas Kemampuan" 

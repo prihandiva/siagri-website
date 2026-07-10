@@ -18,11 +18,21 @@ export async function getPoktan() {
       },
       gapoktan: {
         select: { nama_gapoktan: true }
+      },
+      pengurus: {
+        where: { jabatan: 'Ketua', is_deleted: false, aktif: true }
       }
     },
     orderBy: { nama_poktan: 'asc' },
   });
-  return serialize(data);
+
+  const formattedData = data.map(item => ({
+    ...item,
+    id_ketua: item.pengurus[0]?.id_petani || '',
+    ketua_poktan: item.pengurus[0]?.nama || ''
+  }));
+
+  return serialize(formattedData);
 }
 
 export async function getDesaGapoktanOptions() {
@@ -54,23 +64,34 @@ export async function createPoktan(data: {
   id_gapoktan?: string;
   kode_poktan: string;
   nama_poktan: string;
+  id_ketua?: string;
   ketua_poktan?: string;
   kelas_kemampuan?: string;
   tahun_berdiri?: string;
 }) {
   try {
-    await db.mst_poktan.create({
+    const newPoktan = await db.mst_poktan.create({
       data: {
         id_desa: BigInt(data.id_desa),
         id_gapoktan: data.id_gapoktan ? BigInt(data.id_gapoktan) : null,
         kode_poktan: data.kode_poktan,
         nama_poktan: data.nama_poktan,
-        // TODO: Simpan ketua_poktan ke mst_pengurus_poktan
-        // TODO: Map kelas_kemampuan (string) ke id_kelas (int) jika perlu
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
         status_aktif: true,
       },
     });
+
+    if (data.id_ketua || data.ketua_poktan) {
+      await db.mst_pengurus_poktan.create({
+        data: {
+          id_poktan: newPoktan.id_poktan,
+          id_petani: data.id_ketua ? BigInt(data.id_ketua) : null,
+          nama: data.ketua_poktan || '',
+          jabatan: 'Ketua',
+        }
+      });
+    }
+
     revalidatePath('/master/poktan');
     return { success: true };
   } catch (error: any) {
@@ -88,6 +109,7 @@ export async function updatePoktan(
     id_gapoktan?: string;
     kode_poktan: string;
     nama_poktan: string;
+    id_ketua?: string;
     ketua_poktan?: string;
     kelas_kemampuan?: string;
     tahun_berdiri?: string;
@@ -106,6 +128,31 @@ export async function updatePoktan(
         status_aktif: data.status_aktif,
       },
     });
+
+    // Update or create Ketua
+    const existingKetua = await db.mst_pengurus_poktan.findFirst({
+      where: { id_poktan: BigInt(id), jabatan: 'Ketua', is_deleted: false }
+    });
+
+    if (existingKetua) {
+      await db.mst_pengurus_poktan.update({
+        where: { id_pengurus: existingKetua.id_pengurus },
+        data: {
+          id_petani: data.id_ketua ? BigInt(data.id_ketua) : null,
+          nama: data.ketua_poktan || '',
+        }
+      });
+    } else if (data.id_ketua || data.ketua_poktan) {
+      await db.mst_pengurus_poktan.create({
+        data: {
+          id_poktan: BigInt(id),
+          id_petani: data.id_ketua ? BigInt(data.id_ketua) : null,
+          nama: data.ketua_poktan || '',
+          jabatan: 'Ketua',
+        }
+      });
+    }
+
     revalidatePath('/master/poktan');
     return { success: true };
   } catch (error: any) {

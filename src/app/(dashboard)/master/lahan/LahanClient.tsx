@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Edit2, Trash2 } from 'lucide-react';
 import { createLahan, updateLahan, deleteLahan } from './actions';
+import { WilayahSelector } from '@/components/ui/WilayahSelector';
 
 export default function LahanClient({ 
   initialData, 
@@ -27,7 +28,10 @@ export default function LahanClient({
   
   const [formData, setFormData] = useState({ 
     id_petani: '',
+    id_desa: '',
     id_dusun: '',
+    id_rw: '',
+    id_rt: '',
     kode_lahan: '', 
     nama_lahan: '',
     luas_lahan: '',
@@ -38,19 +42,26 @@ export default function LahanClient({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [dynamicPetaniOpts, setDynamicPetaniOpts] = useState<{label: string, value: string}[]>([]);
 
-  const petaniOpts = options.petani.map(p => ({ 
-    label: `${p.nama_lengkap}${p.nik ? ` - ${p.nik}` : ''}`, 
-    value: p.id_petani 
-  }));
+  React.useEffect(() => {
+    if (formData.id_desa) {
+      fetch(`/api/petani?id_desa=${formData.id_desa}`)
+        .then(res => res.json())
+        .then(data => {
+          setDynamicPetaniOpts(data.map((p: any) => ({
+            label: `${p.nama_lengkap}${p.nik ? ` - ${p.nik}` : ''}`,
+            value: p.id_petani.toString()
+          })));
+        });
+    } else {
+      setDynamicPetaniOpts([]);
+    }
+  }, [formData.id_desa]);
 
-  const dusunOpts = [
-    { label: '-- Pilih Dusun --', value: '' },
-    ...options.dusun.map(d => ({ 
-      label: d.nama_dusun, 
-      value: d.id_dusun 
-    }))
-  ];
+  // Petani options cascade dari pemilihan Desa (dynamicPetaniOpts)
+  // Dusun options sudah tidak diperlukan karena diambil alih oleh WilayahSelector
 
   const statusLahanOpts = [
     { label: 'Milik Sendiri', value: 'MILIK' },
@@ -82,7 +93,10 @@ export default function LahanClient({
       setSelectedItem(item);
       setFormData({
         id_petani: item.id_petani?.toString() || '',
+        id_desa: item.id_desa?.toString() || '',
         id_dusun: item.id_dusun?.toString() || '',
+        id_rw: item.id_rw?.toString() || '',
+        id_rt: item.id_rt?.toString() || '',
         kode_lahan: item.kode_lahan || '',
         nama_lahan: item.nama_lahan || '',
         luas_lahan: item.luas_lahan?.toString() || '',
@@ -94,8 +108,11 @@ export default function LahanClient({
     } else {
       setSelectedItem(null);
       setFormData({ 
-        id_petani: petaniOpts.length > 0 ? petaniOpts[0].value.toString() : '',
+        id_petani: '',
+        id_desa: '',
         id_dusun: '',
+        id_rw: '',
+        id_rt: '',
         kode_lahan: '', 
         nama_lahan: '',
         luas_lahan: '',
@@ -209,13 +226,27 @@ export default function LahanClient({
         <form id="lahan-form" onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           
+          <WilayahSelector 
+            initialValues={{
+              id_desa: formData.id_desa,
+              id_dusun: formData.id_dusun,
+              id_rw: formData.id_rw,
+              id_rt: formData.id_rt
+            }}
+            onDesaChange={(val) => setFormData(prev => ({...prev, id_desa: val, id_petani: ''}))}
+            onDusunChange={(val) => setFormData(prev => ({...prev, id_dusun: val}))}
+            onRwChange={(val) => setFormData(prev => ({...prev, id_rw: val}))}
+            onRtChange={(val) => setFormData(prev => ({...prev, id_rt: val}))}
+          />
+          
           <Select 
             label="Petani Pemilik / Penggarap" 
-            options={petaniOpts}
+            options={dynamicPetaniOpts.length > 0 ? [{label: '-- Pilih Petani --', value: ''}, ...dynamicPetaniOpts] : [{label: '-- Pilih Desa Terlebih Dahulu --', value: ''}]}
             value={formData.id_petani}
             onChange={e => setFormData({...formData, id_petani: e.target.value})}
             required
             placeholder="Pilih Petani"
+            disabled={!formData.id_desa || dynamicPetaniOpts.length === 0}
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -268,12 +299,7 @@ export default function LahanClient({
             />
           </div>
 
-          <Select 
-            label="Dusun (opsional)" 
-            options={dusunOpts}
-            value={formData.id_dusun}
-            onChange={e => setFormData({...formData, id_dusun: e.target.value})}
-          />
+
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700">Keterangan (opsional)</label>

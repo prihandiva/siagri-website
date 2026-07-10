@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Edit2, Trash2 } from 'lucide-react';
 import { createGapoktan, updateGapoktan, deleteGapoktan } from './actions';
+import { WilayahSelector } from '@/components/ui/WilayahSelector';
 
 export default function GapoktanClient({ 
   initialData, 
@@ -31,7 +32,12 @@ export default function GapoktanClient({
     id_desa: '', 
     kode_gapoktan: '', 
     nama_gapoktan: '', 
+    id_ketua: '',
     ketua_gapoktan: '',
+    id_sekretaris: '',
+    sekretaris_gapoktan: '',
+    id_bendahara: '',
+    bendahara_gapoktan: '',
     no_sk: '',
     tahun_berdiri: '',
     status_aktif: true 
@@ -39,10 +45,23 @@ export default function GapoktanClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const desaOpts = desaOptions.map(d => ({ 
-    label: `${d.nama_desa} (${d.kecamatan?.nama_kecamatan})`, 
-    value: d.id_desa 
-  }));
+  const [petaniOpts, setPetaniOpts] = useState<{label: string, value: string, text: string}[]>([]);
+
+  React.useEffect(() => {
+    if (formData.id_desa) {
+      fetch(`/api/petani?id_desa=${formData.id_desa}`)
+        .then(res => res.json())
+        .then(data => {
+          setPetaniOpts(data.map((p: any) => ({
+            label: `${p.nama_lengkap}${p.nik ? ` - ${p.nik}` : ''}`,
+            value: p.id_petani.toString(),
+            text: p.nama_lengkap
+          })));
+        });
+    } else {
+      setPetaniOpts([]);
+    }
+  }, [formData.id_desa]);
 
   // Filtered data
   const filteredData = useMemo(() => {
@@ -63,7 +82,12 @@ export default function GapoktanClient({
         id_desa: item.id_desa,
         kode_gapoktan: item.kode_gapoktan,
         nama_gapoktan: item.nama_gapoktan,
+        id_ketua: item.id_ketua?.toString() || '',
         ketua_gapoktan: item.ketua || '',
+        id_sekretaris: item.id_sekretaris?.toString() || '',
+        sekretaris_gapoktan: item.sekretaris || '',
+        id_bendahara: item.id_bendahara?.toString() || '',
+        bendahara_gapoktan: item.bendahara || '',
         no_sk: item.nomor_registrasi || '',
         tahun_berdiri: item.tanggal_berdiri ? new Date(item.tanggal_berdiri).getFullYear().toString() : '',
         status_aktif: item.status_aktif,
@@ -71,10 +95,15 @@ export default function GapoktanClient({
     } else {
       setSelectedItem(null);
       setFormData({ 
-        id_desa: desaOpts.length > 0 ? desaOpts[0].value : '', 
+        id_desa: '', 
         kode_gapoktan: '', 
         nama_gapoktan: '', 
+        id_ketua: '',
         ketua_gapoktan: '',
+        id_sekretaris: '',
+        sekretaris_gapoktan: '',
+        id_bendahara: '',
+        bendahara_gapoktan: '',
         no_sk: '',
         tahun_berdiri: '',
         status_aktif: true 
@@ -188,13 +217,12 @@ export default function GapoktanClient({
         <form id="gapoktan-form" onSubmit={handleSubmit} className="space-y-6">
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           
-          <Select 
-            label="Wilayah Desa" 
-            options={desaOpts}
-            value={formData.id_desa}
-            onChange={e => setFormData({...formData, id_desa: e.target.value})}
-            required
-            placeholder="Pilih Desa"
+          <WilayahSelector
+            initialValues={{ id_desa: formData.id_desa }}
+            onDesaChange={val => setFormData({...formData, id_desa: val})}
+            showDusun={false}
+            showRw={false}
+            showRt={false}
           />
 
           <div className="grid grid-cols-2 gap-6">
@@ -215,11 +243,15 @@ export default function GapoktanClient({
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <Input 
-              label="Nama Ketua Gapoktan" 
-              value={formData.ketua_gapoktan} 
-              onChange={e => setFormData({...formData, ketua_gapoktan: e.target.value})}
-              placeholder="Nama lengkap ketua"
+            <Select 
+              label="Ketua Gapoktan" 
+              options={petaniOpts.length > 0 ? [{label: '-- Pilih Ketua --', value: ''}, ...petaniOpts] : [{label: '-- Pilih Desa Dahulu --', value: ''}]}
+              value={formData.id_ketua} 
+              onChange={e => {
+                const opt = petaniOpts.find(p => p.value === e.target.value);
+                setFormData({...formData, id_ketua: e.target.value, ketua_gapoktan: opt ? opt.text : ''});
+              }}
+              disabled={!formData.id_desa || petaniOpts.length === 0}
             />
             <Input 
               label="Tahun Berdiri" 
@@ -227,6 +259,29 @@ export default function GapoktanClient({
               value={formData.tahun_berdiri} 
               onChange={e => setFormData({...formData, tahun_berdiri: e.target.value})}
               placeholder="Contoh: 2010"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <Select 
+              label="Sekretaris" 
+              options={petaniOpts.length > 0 ? [{label: '-- Pilih Sekretaris --', value: ''}, ...petaniOpts] : [{label: '-- Pilih Desa Dahulu --', value: ''}]}
+              value={formData.id_sekretaris} 
+              onChange={e => {
+                const opt = petaniOpts.find(p => p.value === e.target.value);
+                setFormData({...formData, id_sekretaris: e.target.value, sekretaris_gapoktan: opt ? opt.text : ''});
+              }}
+              disabled={!formData.id_desa || petaniOpts.length === 0}
+            />
+            <Select 
+              label="Bendahara" 
+              options={petaniOpts.length > 0 ? [{label: '-- Pilih Bendahara --', value: ''}, ...petaniOpts] : [{label: '-- Pilih Desa Dahulu --', value: ''}]}
+              value={formData.id_bendahara} 
+              onChange={e => {
+                const opt = petaniOpts.find(p => p.value === e.target.value);
+                setFormData({...formData, id_bendahara: e.target.value, bendahara_gapoktan: opt ? opt.text : ''});
+              }}
+              disabled={!formData.id_desa || petaniOpts.length === 0}
             />
           </div>
 

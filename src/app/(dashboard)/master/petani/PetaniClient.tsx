@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Edit2, Trash2 } from 'lucide-react';
 import { createPetani, updatePetani, deletePetani } from './actions';
+import { WilayahSelector } from '@/components/ui/WilayahSelector';
 
 export default function PetaniClient({ 
   initialData, 
@@ -48,11 +49,6 @@ export default function PetaniClient({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const desaOpts = options.desa.map(d => ({ 
-    label: `${d.nama_desa} (${d.kecamatan?.nama_kecamatan})`, 
-    value: d.id_desa 
-  }));
 
   // Dependent poktan options based on selected desa
   const poktanOpts = options.poktan
@@ -105,7 +101,7 @@ export default function PetaniClient({
     } else {
       setSelectedItem(null);
       setFormData({ 
-        id_desa: desaOpts.length > 0 ? desaOpts[0].value : '',
+        id_desa: '',
         id_poktan: '',
         nik: '', 
         nama_lengkap: '', 
@@ -237,14 +233,15 @@ export default function PetaniClient({
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           
           <div className="grid grid-cols-2 gap-6">
-            <Select 
-              label="Wilayah Desa" 
-              options={desaOpts}
-              value={formData.id_desa}
-              onChange={e => setFormData({...formData, id_desa: e.target.value, id_poktan: ''})}
-              required
-              placeholder="Pilih Desa"
-            />
+            <div className="col-span-2">
+              <WilayahSelector
+                initialValues={{ id_desa: formData.id_desa }}
+                onDesaChange={val => setFormData({...formData, id_desa: val, id_poktan: ''})}
+                showDusun={false}
+                showRw={false}
+                showRt={false}
+              />
+            </div>
             <Select 
               label="Tergabung dalam Poktan" 
               options={poktanOptsWithEmpty}

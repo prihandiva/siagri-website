@@ -42,7 +42,12 @@ export async function createGapoktan(data: {
   id_desa: string;
   kode_gapoktan: string;
   nama_gapoktan: string;
+  id_ketua?: string;
   ketua_gapoktan?: string;
+  id_sekretaris?: string;
+  sekretaris_gapoktan?: string;
+  id_bendahara?: string;
+  bendahara_gapoktan?: string;
   no_sk?: string;
   tahun_berdiri?: string;
 }) {
@@ -52,7 +57,12 @@ export async function createGapoktan(data: {
         id_desa: BigInt(data.id_desa),
         kode_gapoktan: data.kode_gapoktan,
         nama_gapoktan: data.nama_gapoktan,
+        id_ketua: data.id_ketua ? BigInt(data.id_ketua) : null,
         ketua: data.ketua_gapoktan || null,
+        id_sekretaris: data.id_sekretaris ? BigInt(data.id_sekretaris) : null,
+        sekretaris: data.sekretaris_gapoktan || null,
+        id_bendahara: data.id_bendahara ? BigInt(data.id_bendahara) : null,
+        bendahara: data.bendahara_gapoktan || null,
         nomor_registrasi: data.no_sk || null,
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
         status_aktif: true,
@@ -74,7 +84,12 @@ export async function updateGapoktan(
     id_desa: string;
     kode_gapoktan: string;
     nama_gapoktan: string;
+    id_ketua?: string;
     ketua_gapoktan?: string;
+    id_sekretaris?: string;
+    sekretaris_gapoktan?: string;
+    id_bendahara?: string;
+    bendahara_gapoktan?: string;
     no_sk?: string;
     tahun_berdiri?: string;
     status_aktif: boolean;
@@ -87,7 +102,12 @@ export async function updateGapoktan(
         id_desa: BigInt(data.id_desa),
         kode_gapoktan: data.kode_gapoktan,
         nama_gapoktan: data.nama_gapoktan,
+        id_ketua: data.id_ketua ? BigInt(data.id_ketua) : null,
         ketua: data.ketua_gapoktan || null,
+        id_sekretaris: data.id_sekretaris ? BigInt(data.id_sekretaris) : null,
+        sekretaris: data.sekretaris_gapoktan || null,
+        id_bendahara: data.id_bendahara ? BigInt(data.id_bendahara) : null,
+        bendahara: data.bendahara_gapoktan || null,
         nomor_registrasi: data.no_sk || null,
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
         status_aktif: data.status_aktif,
