@@ -63,9 +63,9 @@ export default function GapoktanClient({
         id_desa: item.id_desa,
         kode_gapoktan: item.kode_gapoktan,
         nama_gapoktan: item.nama_gapoktan,
-        ketua_gapoktan: item.ketua_gapoktan || '',
-        no_sk: item.no_sk || '',
-        tahun_berdiri: item.tahun_berdiri || '',
+        ketua_gapoktan: item.ketua || '',
+        no_sk: item.nomor_registrasi || '',
+        tahun_berdiri: item.tanggal_berdiri ? new Date(item.tanggal_berdiri).getFullYear().toString() : '',
         status_aktif: item.status_aktif,
       });
     } else {
@@ -124,7 +124,7 @@ export default function GapoktanClient({
     { key: 'nama_gapoktan', header: 'Nama Gapoktan', render: (item: any) => (
       <div>
         <div className="font-medium text-[#1B5E20]">{item.nama_gapoktan}</div>
-        <div className="text-xs text-gray-500">Berdiri: {item.tahun_berdiri || '-'}</div>
+        <div className="text-xs text-gray-500">Berdiri: {item.tanggal_berdiri ? new Date(item.tanggal_berdiri).getFullYear() : '-'}</div>
       </div>
     )},
     { key: 'desa', header: 'Wilayah Desa', render: (item: any) => (
@@ -133,8 +133,8 @@ export default function GapoktanClient({
         <div className="text-xs text-gray-500">Kec. {item.desa?.kecamatan?.nama_kecamatan}</div>
       </div>
     )},
-    { key: 'ketua_gapoktan', header: 'Ketua', render: (item: any) => item.ketua_gapoktan || '-' },
-    { key: 'no_sk', header: 'No. SK', render: (item: any) => item.no_sk || '-' },
+    { key: 'ketua_gapoktan', header: 'Ketua', render: (item: any) => item.ketua || '-' },
+    { key: 'no_sk', header: 'No. SK', render: (item: any) => item.nomor_registrasi || '-' },
     { 
       key: 'status_aktif', 
       header: 'Status',
