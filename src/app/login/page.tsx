@@ -2,20 +2,19 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, LogIn, Leaf } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, Leaf, Map, Database, ShieldCheck } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -26,421 +25,157 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Username atau password salah. Silakan coba lagi.");
+        toast.error("Login gagal. Periksa username dan password Anda.");
       } else {
-        router.push("/");
+        toast.success("Login berhasil!");
+        router.replace("/"); // Menggunakan replace agar tidak stuck di history browser
         router.refresh();
       }
     } catch {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+      toast.error("Terjadi kesalahan pada sistem.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-page">
-      {/* Background decorative elements */}
-      <div className="login-bg">
-        <div className="login-bg-circle login-bg-circle-1" />
-        <div className="login-bg-circle login-bg-circle-2" />
-        <div className="login-bg-circle login-bg-circle-3" />
-      </div>
-
-      {/* Left panel - Branding */}
-      <div className="login-left">
-        <div className="login-brand">
-          {/* Logo */}
-          <div className="login-logo">
-            <div className="login-logo-icon">
-              <Leaf size={32} strokeWidth={1.5} />
+    <div className="flex min-h-screen bg-slate-50 font-sans">
+      {/* Left Panel: Branding & Information */}
+      <div className="hidden lg:flex w-5/12 bg-gradient-to-br from-emerald-800 to-green-600 p-12 text-white flex-col justify-between relative overflow-hidden shadow-2xl z-10">
+        {/* Background decorations */}
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-white opacity-5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-white opacity-5 rounded-full blur-3xl"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-inner">
+              <Leaf size={28} className="text-white" />
             </div>
             <div>
-              <div className="login-logo-title">SIAGRI</div>
-              <div className="login-logo-tagline">Sistem Informasi Agribisnis</div>
+              <h1 className="text-3xl font-extrabold tracking-wider">SIAGRI</h1>
+              <p className="text-xs font-medium tracking-widest text-emerald-100 uppercase mt-1">Sistem Informasi Agribisnis</p>
             </div>
           </div>
 
-          <div className="login-hero-text">
-            <h1 className="login-hero-title">
-              Data Pertanian<br />Lebih Terdata,<br />Kebijakan Lebih Tepat
-            </h1>
-            <p className="login-hero-desc">
-              Platform pengelolaan data agribisnis terintegrasi dari tingkat desa
-              hingga provinsi. Mendukung perencanaan pembangunan sektor pertanian
-              berbasis data akurat.
+          <div className="space-y-6">
+            <h2 className="text-4xl font-bold leading-tight drop-shadow-md">
+              Data Pertanian <br />Lebih <span className="text-green-300">Terdata</span>,<br />Kebijakan Lebih <span className="text-green-300">Tepat</span>
+            </h2>
+            <p className="text-emerald-50 text-lg leading-relaxed max-w-md">
+              Platform pengelolaan data agribisnis terintegrasi dari tingkat desa hingga provinsi untuk perencanaan pembangunan pertanian yang cerdas.
             </p>
           </div>
 
-          {/* Features list */}
-          <div className="login-features">
-            {[
-              { icon: "🗺️", text: "Peta sebaran komoditas interaktif" },
-              { icon: "📊", text: "Dashboard analitik multi-level" },
-              { icon: "📱", text: "Tersedia di web & mobile" },
-              { icon: "🔐", text: "Hak akses berbasis wilayah" },
-            ].map((f, i) => (
-              <div key={i} className="login-feature-item">
-                <span className="login-feature-icon">{f.icon}</span>
-                <span>{f.text}</span>
-              </div>
-            ))}
+          <div className="mt-16 space-y-5">
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all duration-300">
+              <div className="bg-emerald-500/50 p-2 rounded-lg"><Map size={20} /></div>
+              <span className="font-medium text-emerald-50">Pemetaan Komoditas Interaktif</span>
+            </div>
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all duration-300">
+              <div className="bg-emerald-500/50 p-2 rounded-lg"><Database size={20} /></div>
+              <span className="font-medium text-emerald-50">Dashboard Analitik Multi-Level</span>
+            </div>
+            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-all duration-300">
+              <div className="bg-emerald-500/50 p-2 rounded-lg"><ShieldCheck size={20} /></div>
+              <span className="font-medium text-emerald-50">Sistem Keamanan Berlapis</span>
+            </div>
           </div>
         </div>
 
-        {/* Bottom attribution */}
-        <div className="login-attribution">
-          <span>Dikembangkan oleh</span>
-          <strong>Dharma Jaya Revolusi × Arelda Industries</strong>
+        <div className="relative z-10 text-sm text-emerald-200/80 border-t border-white/10 pt-6 mt-12 flex justify-between items-center">
+          <span>&copy; {new Date().getFullYear()} SIAGRI</span>
+          <span>Dharma Jaya Revolusi &times; Arelda Industries</span>
         </div>
       </div>
 
-      {/* Right panel - Login Form */}
-      <div className="login-right">
-        <div className="login-form-container">
-          {/* Mobile logo */}
-          <div className="login-form-logo">
-            <div className="login-form-logo-icon">
-              <Leaf size={20} strokeWidth={1.5} />
+      {/* Right Panel: Login Form */}
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-8 bg-slate-50 relative">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-10 transform transition-all hover:-translate-y-1 hover:shadow-2xl">
+          
+          <div className="lg:hidden flex items-center gap-3 mb-10 justify-center">
+            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Leaf size={28} className="text-white" />
             </div>
-            <span>SIAGRI</span>
+            <div className="text-center">
+              <h1 className="text-2xl font-extrabold text-slate-800 tracking-wider">SIAGRI</h1>
+            </div>
           </div>
 
-          <div className="login-form-header">
-            <h2>Selamat Datang</h2>
-            <p>Masuk ke akun SIAGRI Anda</p>
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl font-bold text-slate-800 mb-2">Selamat Datang</h2>
+            <p className="text-slate-500 font-medium">Masuk untuk mengelola data agribisnis</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
-            {/* Error message */}
-            {error && (
-              <div className="login-error" role="alert">
-                <span>⚠️</span>
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Username */}
-            <div className="form-group">
-              <label htmlFor="username" className="form-label required">
-                Username
-              </label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-semibold text-slate-700 ml-1">Username</label>
               <input
                 id="username"
                 type="text"
-                className="form-input"
+                className="w-full px-5 py-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder:text-slate-400"
                 placeholder="Masukkan username Anda"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                autoComplete="username"
                 disabled={loading}
               />
             </div>
 
-            {/* Password */}
-            <div className="form-group">
-              <label htmlFor="password" className="form-label required">
-                Password
-              </label>
-              <div className="input-password-wrapper">
+            <div className="space-y-2 relative">
+              <label htmlFor="password" className="text-sm font-semibold text-slate-700 ml-1">Password</label>
+              <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className="form-input"
-                  placeholder="Masukkan password Anda"
+                  className="w-full px-5 py-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
                   disabled={loading}
                 />
                 <button
                   type="button"
-                  className="input-password-toggle"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-green-600 transition-colors p-1"
                   onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
-                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
+            <div className="flex items-center justify-between mt-2 mb-8">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 transition-colors cursor-pointer" />
+                <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">Ingat saya</span>
+              </label>
+              <a href="#" className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors">Lupa Password?</a>
+            </div>
+
             <button
-              id="btn-login"
               type="submit"
-              className="btn btn-primary login-submit-btn"
               disabled={loading || !username || !password}
+              className="w-full py-4 px-6 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-xl font-bold shadow-lg shadow-green-600/30 transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group"
             >
               {loading ? (
                 <>
-                  <Loader2 size={16} className="spin" />
+                  <Loader2 size={20} className="animate-spin" />
                   <span>Memproses...</span>
                 </>
               ) : (
                 <>
-                  <LogIn size={16} />
-                  <span>Masuk</span>
+                  <span>Masuk ke Sistem</span>
+                  <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Footer note */}
-          <div className="login-form-footer">
-            <p>
-              Lupa password? Hubungi admin wilayah Anda atau{" "}
-              <a href="mailto:admin@siagri.id">admin@siagri.id</a>
-            </p>
-          </div>
+          <p className="mt-8 text-center text-sm text-slate-500">
+            Butuh bantuan? Hubungi <a href="mailto:admin@siagri.id" className="font-semibold text-green-600 hover:underline">Administrator</a>
+          </p>
         </div>
       </div>
-
-      <style jsx>{`
-        .login-page {
-          display: flex;
-          min-height: 100vh;
-          position: relative;
-          overflow: hidden;
-        }
-
-        /* Background circles */
-        .login-bg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-        .login-bg-circle {
-          position: absolute;
-          border-radius: 50%;
-          opacity: 0.06;
-          background: #4CAF50;
-        }
-        .login-bg-circle-1 { width: 600px; height: 600px; top: -200px; left: -200px; }
-        .login-bg-circle-2 { width: 400px; height: 400px; bottom: -150px; left: 10%; opacity: 0.04; }
-        .login-bg-circle-3 { width: 300px; height: 300px; top: 40%; right: 55%; opacity: 0.05; }
-
-        /* LEFT PANEL */
-        .login-left {
-          width: 55%;
-          background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%);
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 3rem;
-          color: white;
-        }
-
-        .login-brand { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-
-        .login-logo {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 3rem;
-        }
-
-        .login-logo-icon {
-          width: 56px;
-          height: 56px;
-          background: rgba(255,255,255,0.15);
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          backdrop-filter: blur(10px);
-          color: white;
-        }
-
-        .login-logo-title {
-          font-size: 2rem;
-          font-weight: 800;
-          letter-spacing: 0.1em;
-          line-height: 1;
-        }
-
-        .login-logo-tagline {
-          font-size: 0.75rem;
-          color: rgba(255,255,255,0.65);
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-        }
-
-        .login-hero-title {
-          font-size: 2.5rem;
-          font-weight: 700;
-          line-height: 1.2;
-          color: white;
-          margin-bottom: 1.25rem;
-        }
-
-        .login-hero-desc {
-          font-size: 0.9375rem;
-          color: rgba(255,255,255,0.75);
-          line-height: 1.7;
-          max-width: 440px;
-          margin-bottom: 2.5rem;
-        }
-
-        .login-features { display: flex; flex-direction: column; gap: 0.875rem; }
-
-        .login-feature-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          font-size: 0.875rem;
-          color: rgba(255,255,255,0.85);
-        }
-
-        .login-feature-icon {
-          width: 32px;
-          height: 32px;
-          background: rgba(255,255,255,0.12);
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1rem;
-          flex-shrink: 0;
-        }
-
-        .login-attribution {
-          display: flex;
-          flex-direction: column;
-          font-size: 0.75rem;
-          color: rgba(255,255,255,0.5);
-          gap: 0.25rem;
-        }
-
-        .login-attribution strong { color: rgba(255,255,255,0.75); font-weight: 500; }
-
-        /* RIGHT PANEL */
-        .login-right {
-          width: 45%;
-          background: #F8FAFC;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-          position: relative;
-          z-index: 1;
-        }
-
-        .login-form-container {
-          width: 100%;
-          max-width: 380px;
-        }
-
-        .login-form-logo {
-          display: none;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 2rem;
-          font-size: 1.25rem;
-          font-weight: 800;
-          color: #1B5E20;
-          letter-spacing: 0.1em;
-        }
-
-        .login-form-logo-icon {
-          width: 36px;
-          height: 36px;
-          background: #1B5E20;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-        }
-
-        .login-form-header { margin-bottom: 1.75rem; }
-
-        .login-form-header h2 {
-          font-size: 1.625rem;
-          font-weight: 700;
-          color: #111827;
-          margin-bottom: 0.375rem;
-        }
-
-        .login-form-header p {
-          font-size: 0.875rem;
-          color: #6B7280;
-        }
-
-        .login-form { display: flex; flex-direction: column; gap: 0.25rem; }
-
-        .login-error {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: #FEE2E2;
-          border: 1px solid #FECACA;
-          border-radius: 8px;
-          padding: 0.75rem 1rem;
-          font-size: 0.8125rem;
-          color: #DC2626;
-          margin-bottom: 0.5rem;
-        }
-
-        .input-password-wrapper { position: relative; }
-
-        .input-password-toggle {
-          position: absolute;
-          right: 0.875rem;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: #9CA3AF;
-          display: flex;
-          align-items: center;
-          padding: 0;
-          transition: color 0.2s;
-        }
-
-        .input-password-toggle:hover { color: #6B7280; }
-
-        .login-submit-btn {
-          width: 100%;
-          justify-content: center;
-          padding: 0.75rem;
-          font-size: 0.9375rem;
-          border-radius: 8px;
-          margin-top: 0.5rem;
-        }
-
-        .spin {
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-
-        .login-form-footer {
-          margin-top: 1.5rem;
-          text-align: center;
-          font-size: 0.8125rem;
-          color: #9CA3AF;
-        }
-
-        .login-form-footer a {
-          color: #1B5E20;
-          text-decoration: none;
-          font-weight: 500;
-        }
-
-        .login-form-footer a:hover { text-decoration: underline; }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-          .login-left { display: none; }
-          .login-right { width: 100%; }
-          .login-form-logo { display: flex; }
-        }
-      `}</style>
     </div>
   );
 }

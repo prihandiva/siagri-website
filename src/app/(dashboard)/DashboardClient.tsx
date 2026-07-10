@@ -232,18 +232,21 @@ export default function DashboardClient({ user }: { user: any }) {
         </div>
 
         {/* Komoditas Unggulan (Pie Chart) */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm relative">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-gray-800">Komoditas Unggulan</h3>
           </div>
-          <div className="h-64 flex flex-col justify-center">
-            <ResponsiveContainer width="100%" height={200}>
+          <div className="flex flex-col items-center gap-4">
+            {/* Pie Chart */}
+            <ResponsiveContainer width="100%" height={180}>
               <PieChart>
                 <Pie
                   data={pieData}
-                  innerRadius={60}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
                   outerRadius={80}
-                  paddingAngle={2}
+                  paddingAngle={3}
                   dataKey="value"
                   stroke="none"
                 >
@@ -251,15 +254,18 @@ export default function DashboardClient({ user }: { user: any }) {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <RechartsTooltip
+                  formatter={(value: any) => [`${value}%`, 'Persentase']}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
               </PieChart>
             </ResponsiveContainer>
-            {/* Custom Legend */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
+            {/* Legend di bawah chart, tidak overlap */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full px-2">
               {pieData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2 text-xs">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-gray-600 font-medium w-16">{item.name}</span>
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-gray-600 font-medium flex-1 truncate">{item.name}</span>
                   <span className="text-gray-900 font-bold">{item.value}%</span>
                 </div>
               ))}

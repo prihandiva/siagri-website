@@ -109,7 +109,7 @@ async function main() {
   // ─── SUPER ADMIN USER ─────────────────────────────
   console.log("\n👤 Membuat Super Admin...");
   const superAdminRole = await prisma.sys_role.findUnique({ where: { kode_role: "R001" } });
-  const hashedPassword = await bcrypt.hash("siagri2024", 12);
+  const hashedPassword = await bcrypt.hash("password", 12);
 
   await prisma.sys_user.upsert({
     where: { username: "superadmin" },
@@ -142,8 +142,8 @@ async function main() {
   });
 
   console.log("   ✅ User berhasil dibuat:");
-  console.log("   📌 Username: superadmin  | Password: siagri2024 | Role: Super Admin");
-  console.log("   📌 Username: admindesa   | Password: siagri2024 | Role: Admin Desa");
+  console.log("   📌 Username: superadmin  | Password: password | Role: Super Admin");
+  console.log("   📌 Username: admindesa   | Password: password | Role: Admin Desa");
 
   console.log("\n✨ Seeding selesai!\n");
 }

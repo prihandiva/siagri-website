@@ -118,6 +118,7 @@ model mst_dusun {
 
   desa            mst_desa   @relation(fields: [id_desa], references: [id_desa])
   lahan           trx_lahan[]
+  rw              mst_rw[]
 }
 
 // ──────────────────────────────────────────────────────────
@@ -439,6 +440,56 @@ model mst_komoditas {
   produksi       trx_produksi[]
   pemasaran      trx_pemasaran[]
   poktan_utama   mst_poktan[]
+}
+
+// ──────────────────────────────────────────────────────────
+// MASTER RW (RUKUN WARGA)
+// ──────────────────────────────────────────────────────────
+
+model mst_rw {
+  id_rw        BigInt   @id @default(autoincrement())
+  id_dusun     BigInt
+  kode_rw      String   @db.VarChar(10)
+  nama_rw      String   @db.VarChar(50)
+  ketua_rw     String?  @db.VarChar(150)
+  no_hp        String?  @db.VarChar(20)
+  jumlah_rt    Int?
+  status_aktif Boolean  @default(true)
+  created_by   BigInt?
+  created_at   DateTime @default(now())
+  updated_by   BigInt?
+  updated_at   DateTime @updatedAt
+  is_deleted   Boolean  @default(false)
+
+  dusun        mst_dusun @relation(fields: [id_dusun], references: [id_dusun])
+  rt           mst_rt[]
+
+  @@unique([id_dusun, kode_rw])
+}
+
+// ──────────────────────────────────────────────────────────
+// MASTER RT (RUKUN TETANGGA)
+// ──────────────────────────────────────────────────────────
+
+model mst_rt {
+  id_rt        BigInt   @id @default(autoincrement())
+  id_rw        BigInt
+  kode_rt      String   @db.VarChar(10)
+  nama_rt      String   @db.VarChar(50)
+  ketua_rt     String?  @db.VarChar(150)
+  no_hp        String?  @db.VarChar(20)
+  jumlah_kk    Int?
+  jumlah_jiwa  Int?
+  status_aktif Boolean  @default(true)
+  created_by   BigInt?
+  created_at   DateTime @default(now())
+  updated_by   BigInt?
+  updated_at   DateTime @updatedAt
+  is_deleted   Boolean  @default(false)
+
+  rw           mst_rw @relation(fields: [id_rw], references: [id_rw])
+
+  @@unique([id_rw, kode_rt])
 }
 
 // ──────────────────────────────────────────────────────────
