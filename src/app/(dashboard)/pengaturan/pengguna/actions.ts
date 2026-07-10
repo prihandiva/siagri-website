@@ -43,14 +43,14 @@ export async function createPengguna(data: any) {
 
     await db.sys_user.create({
       data: {
-        id_role: BigInt(data.id_role),
+        id_role: parseInt(data.id_role, 10),
         id_desa: data.id_desa ? BigInt(data.id_desa) : null,
         username: data.username,
         password: hashedPassword,
         nama_lengkap: data.nama_lengkap,
         email: data.email || null,
         no_hp: data.no_hp || null,
-        status_aktif: data.status_aktif ?? true,
+        status: data.status_aktif === false ? 'NONAKTIF' : 'AKTIF',
       },
     });
     revalidatePath('/pengaturan/pengguna');
@@ -66,13 +66,13 @@ export async function createPengguna(data: any) {
 export async function updatePengguna(id: string, data: any) {
   try {
     const updateData: any = {
-      id_role: BigInt(data.id_role),
+      id_role: parseInt(data.id_role, 10),
       id_desa: data.id_desa ? BigInt(data.id_desa) : null,
       username: data.username,
       nama_lengkap: data.nama_lengkap,
       email: data.email || null,
       no_hp: data.no_hp || null,
-      status_aktif: data.status_aktif,
+      status: data.status_aktif === false ? 'NONAKTIF' : 'AKTIF',
     };
 
     if (data.password) {

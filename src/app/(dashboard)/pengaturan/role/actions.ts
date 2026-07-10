@@ -7,7 +7,7 @@ const serialize = (obj: any) =>
   JSON.parse(JSON.stringify(obj, (_, v) => (typeof v === 'bigint' ? v.toString() : v)));
 
 export async function getRole() {
-  const data = await db.mst_role.findMany({
+  const data = await db.sys_role.findMany({
     include: {
       _count: { select: { users: true } },
     },
@@ -22,7 +22,7 @@ export async function createRole(data: {
   deskripsi?: string;
 }) {
   try {
-    await db.mst_role.create({
+    await db.sys_role.create({
       data: {
         nama_role: data.nama_role,
         kode_role: data.kode_role,
@@ -42,8 +42,8 @@ export async function updateRole(
   data: { nama_role: string; kode_role: string; deskripsi?: string }
 ) {
   try {
-    await db.mst_role.update({
-      where: { id_role: BigInt(id) },
+    await db.sys_role.update({
+      where: { id_role: parseInt(id, 10) },
       data: {
         nama_role: data.nama_role,
         kode_role: data.kode_role,
@@ -61,11 +61,11 @@ export async function updateRole(
 export async function deleteRole(id: string) {
   try {
     // Cek apakah role masih dipakai oleh pengguna
-    const count = await db.users.count({ where: { id_role: BigInt(id) } });
+    const count = await db.sys_user.count({ where: { id_role: parseInt(id, 10) } });
     if (count > 0) {
       return { success: false, error: `Role ini masih digunakan oleh ${count} pengguna dan tidak dapat dihapus.` };
     }
-    await db.mst_role.delete({ where: { id_role: BigInt(id) } });
+    await db.sys_role.delete({ where: { id_role: parseInt(id, 10) } });
     revalidatePath('/pengaturan/role');
     return { success: true };
   } catch (error: any) {

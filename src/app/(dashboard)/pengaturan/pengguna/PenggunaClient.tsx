@@ -66,7 +66,7 @@ export default function PenggunaClient({
         nama_lengkap: item.nama_lengkap,
         email: item.email || '',
         no_hp: item.no_hp || '',
-        status_aktif: item.status_aktif,
+        status_aktif: item.status !== 'NONAKTIF',
       });
     } else {
       setSelectedItem(null);
@@ -145,11 +145,11 @@ export default function PenggunaClient({
       </div>
     )},
     { 
-      key: 'status_aktif', 
+      key: 'status', 
       header: 'Status',
       render: (item: any) => (
-        <Badge variant={item.status_aktif ? 'success' : 'danger'}>
-          {item.status_aktif ? 'Aktif' : 'Nonaktif'}
+        <Badge variant={item.status !== 'NONAKTIF' ? 'success' : 'danger'}>
+          {item.status !== 'NONAKTIF' ? 'Aktif' : 'Nonaktif'}
         </Badge>
       )
     },
