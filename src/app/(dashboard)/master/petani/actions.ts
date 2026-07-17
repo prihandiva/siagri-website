@@ -14,11 +14,23 @@ export async function getPetani() {
     where: { is_deleted: false },
     include: {
       desa: {
-        select: { nama_desa: true, kecamatan: { select: { nama_kecamatan: true } } }
+        select: { 
+          nama_desa: true, 
+          kecamatan: { select: { nama_kecamatan: true, kabupaten: { select: { nama_kabupaten: true, provinsi: { select: { nama_provinsi: true } } } } } } 
+        }
       },
-      poktan: {
-        select: { nama_poktan: true }
-      }
+      lahan: {
+        where: { is_deleted: false },
+        select: { id_lahan: true, luas_lahan: true }
+      },
+      keanggotaan_poktan: {
+        where: { status: 'AKTIF' },
+        select: {
+          poktan: { select: { id_poktan: true, nama_poktan: true } }
+        }
+      },
+      pendidikan: true,
+      pekerjaan: true
     },
     orderBy: { nama_lengkap: 'asc' },
   });
@@ -46,66 +58,78 @@ export async function getDesaPoktanOptions() {
     orderBy: { nama_poktan: 'asc' },
   });
 
-  return serialize({ desa: desaData, poktan: poktanData });
+  const pendidikanData = await db.mst_pendidikan.findMany({
+    orderBy: { urutan: 'asc' },
+  });
+
+  const pekerjaanData = await db.mst_pekerjaan.findMany({
+    orderBy: { nama_pekerjaan: 'asc' },
+  });
+
+  return serialize({ desa: desaData, poktan: poktanData, pendidikan: pendidikanData, pekerjaan: pekerjaanData });
 }
 
 export async function createPetani(data: any) {
   try {
+    const newData = { ...data };
+    delete newData.id_poktan;
+    delete newData.rt;
+    delete newData.rw;
+
     await db.mst_petani.create({
       data: {
-        id_desa: BigInt(data.id_desa),
-        id_poktan: data.id_poktan ? BigInt(data.id_poktan) : null,
-        nik: data.nik,
-        nama_lengkap: data.nama_lengkap,
-        tempat_lahir: data.tempat_lahir || null,
-        tanggal_lahir: data.tanggal_lahir ? new Date(data.tanggal_lahir) : null,
-        jenis_kelamin: data.jenis_kelamin || null,
-        alamat: data.alamat || null,
-        rt: data.rt || null,
-        rw: data.rw || null,
-        no_hp: data.no_hp || null,
-        status_perkawinan: data.status_perkawinan || null,
-        pengalaman_tani_tahun: data.pengalaman_tani_tahun ? parseInt(data.pengalaman_tani_tahun, 10) : null,
+        id_desa: BigInt(newData.id_desa),
+        nik: newData.nik,
+        nama_lengkap: newData.nama_lengkap,
+        tempat_lahir: newData.tempat_lahir || null,
+        tanggal_lahir: newData.tanggal_lahir ? new Date(newData.tanggal_lahir) : null,
+        jenis_kelamin: newData.jenis_kelamin || null,
+        alamat: newData.alamat || null,
+        no_hp: newData.no_hp || null,
+        status_perkawinan: newData.status_perkawinan || null,
+        id_pendidikan: newData.id_pendidikan ? parseInt(newData.id_pendidikan, 10) : null,
+        id_pekerjaan: newData.id_pekerjaan ? parseInt(newData.id_pekerjaan, 10) : null,
+        pengalaman_tani_tahun: newData.pengalaman_tani_tahun ? parseInt(newData.pengalaman_tani_tahun, 10) : null,
         status_aktif: true,
       },
     });
     revalidatePath('/master/petani');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'NIK Petani sudah terdaftar.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'NIK Petani sudah terdaftar.' };
     return { success: false, error: error.message };
   }
 }
 
 export async function updatePetani(id: string, data: any) {
   try {
+    const newData = { ...data };
+    delete newData.id_poktan;
+    delete newData.rt;
+    delete newData.rw;
+
     await db.mst_petani.update({
       where: { id_petani: BigInt(id) },
       data: {
-        id_desa: BigInt(data.id_desa),
-        id_poktan: data.id_poktan ? BigInt(data.id_poktan) : null,
-        nik: data.nik,
-        nama_lengkap: data.nama_lengkap,
-        tempat_lahir: data.tempat_lahir || null,
-        tanggal_lahir: data.tanggal_lahir ? new Date(data.tanggal_lahir) : null,
-        jenis_kelamin: data.jenis_kelamin || null,
-        alamat: data.alamat || null,
-        rt: data.rt || null,
-        rw: data.rw || null,
-        no_hp: data.no_hp || null,
-        status_perkawinan: data.status_perkawinan || null,
-        pengalaman_tani_tahun: data.pengalaman_tani_tahun ? parseInt(data.pengalaman_tani_tahun, 10) : null,
-        status_aktif: data.status_aktif,
+        id_desa: BigInt(newData.id_desa),
+        nik: newData.nik,
+        nama_lengkap: newData.nama_lengkap,
+        tempat_lahir: newData.tempat_lahir || null,
+        tanggal_lahir: newData.tanggal_lahir ? new Date(newData.tanggal_lahir) : null,
+        jenis_kelamin: newData.jenis_kelamin || null,
+        alamat: newData.alamat || null,
+        no_hp: newData.no_hp || null,
+        status_perkawinan: newData.status_perkawinan || null,
+        id_pendidikan: newData.id_pendidikan ? parseInt(newData.id_pendidikan, 10) : null,
+        id_pekerjaan: newData.id_pekerjaan ? parseInt(newData.id_pekerjaan, 10) : null,
+        pengalaman_tani_tahun: newData.pengalaman_tani_tahun ? parseInt(newData.pengalaman_tani_tahun, 10) : null,
+        status_aktif: newData.status_aktif,
       },
     });
     revalidatePath('/master/petani');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'NIK Petani sudah digunakan.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'NIK Petani sudah digunakan.' };
     return { success: false, error: error.message };
   }
 }
@@ -115,6 +139,51 @@ export async function deletePetani(id: string) {
     await db.mst_petani.update({
       where: { id_petani: BigInt(id) },
       data: { is_deleted: true },
+    });
+    revalidatePath('/master/petani');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function gabungkanPetaniKePoktan(id_petani: string, id_poktan: string) {
+  try {
+    // Nonaktifkan keanggotaan lama
+    await db.mst_anggota_poktan.updateMany({
+      where: { id_petani: BigInt(id_petani), status: 'AKTIF' },
+      data: { status: 'KELUAR' },
+    });
+    // Insert atau update
+    const existing = await db.mst_anggota_poktan.findFirst({
+      where: { id_poktan: BigInt(id_poktan), id_petani: BigInt(id_petani) }
+    });
+    if (existing) {
+      await db.mst_anggota_poktan.update({
+        where: { id_anggota: existing.id_anggota },
+        data: { status: 'AKTIF' }
+      });
+    } else {
+      await db.mst_anggota_poktan.create({
+        data: {
+          id_poktan: BigInt(id_poktan),
+          id_petani: BigInt(id_petani),
+          status: 'AKTIF',
+        }
+      });
+    }
+    revalidatePath('/master/petani');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function keluarkanPetaniDariPoktan(id_petani: string) {
+  try {
+    await db.mst_anggota_poktan.updateMany({
+      where: { id_petani: BigInt(id_petani), status: 'AKTIF' },
+      data: { status: 'KELUAR' },
     });
     revalidatePath('/master/petani');
     return { success: true };

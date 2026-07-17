@@ -12,7 +12,22 @@ const serialize = (obj: any) => JSON.parse(
 export async function getKomoditas() {
   const data = await db.mst_komoditas.findMany({
     where: { is_deleted: false },
-    orderBy: [{ subsektor: 'asc' }, { nama_komoditas: 'asc' }],
+    include: { subsektor_rel: true, satuan_rel: true },
+    orderBy: [{ id_subsektor: 'asc' }, { nama_komoditas: 'asc' }],
+  });
+  return serialize(data);
+}
+
+export async function getSatuanOptions() {
+  const data = await db.mst_satuan.findMany({
+    orderBy: { nama_satuan: 'asc' }
+  });
+  return serialize(data);
+}
+
+export async function getSubsektorOptions() {
+  const data = await db.mst_subsektor.findMany({
+    orderBy: { nama_subsektor: 'asc' }
   });
   return serialize(data);
 }
@@ -20,8 +35,8 @@ export async function getKomoditas() {
 export async function createKomoditas(data: {
   kode_komoditas: string;
   nama_komoditas: string;
-  subsektor: string;
-  satuan?: string;
+  id_subsektor: string | number;
+  id_satuan?: string | number;
   deskripsi?: string;
   gambar?: string;
 }) {
@@ -30,8 +45,8 @@ export async function createKomoditas(data: {
       data: {
         kode_komoditas: data.kode_komoditas,
         nama_komoditas: data.nama_komoditas,
-        subsektor: data.subsektor,
-        satuan: data.satuan || null,
+        id_subsektor: Number(data.id_subsektor),
+        id_satuan: data.id_satuan ? Number(data.id_satuan) : null,
         deskripsi: data.deskripsi || null,
         gambar: data.gambar || null,
         status_aktif: true,
@@ -52,8 +67,8 @@ export async function updateKomoditas(
   data: {
     kode_komoditas: string;
     nama_komoditas: string;
-    subsektor: string;
-    satuan?: string;
+    id_subsektor: string | number;
+    id_satuan?: string | number;
     deskripsi?: string;
     gambar?: string;
     status_aktif: boolean;
@@ -65,8 +80,8 @@ export async function updateKomoditas(
       data: {
         kode_komoditas: data.kode_komoditas,
         nama_komoditas: data.nama_komoditas,
-        subsektor: data.subsektor,
-        satuan: data.satuan || null,
+        id_subsektor: Number(data.id_subsektor),
+        id_satuan: data.id_satuan ? Number(data.id_satuan) : null,
         deskripsi: data.deskripsi || null,
         gambar: data.gambar || null,
         status_aktif: data.status_aktif,

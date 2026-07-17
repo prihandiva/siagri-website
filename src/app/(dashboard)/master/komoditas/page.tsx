@@ -1,6 +1,6 @@
 import React from 'react';
 import KomoditasClient from './KomoditasClient';
-import { getKomoditas } from './actions';
+import { getKomoditas, getSubsektorOptions, getSatuanOptions } from './actions';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 
 export default async function KomoditasPage() {
   const data = await getKomoditas();
+  const subsektorOpts = await getSubsektorOptions();
+  const satuanOpts = await getSatuanOptions();
 
-  return <KomoditasClient initialData={data} />;
+  return <KomoditasClient initialData={data} options={{ subsektor: subsektorOpts, satuan: satuanOpts }} />;
 }

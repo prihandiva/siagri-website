@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
@@ -10,7 +10,6 @@ const serialize = (obj: any) => JSON.parse(
 );
 
 export async function getProduksi() {
-  // trx_lahan tidak punya relasi desa langsung; ambil wilayah via petani->desa
   const data = await db.trx_produksi.findMany({
     where: { is_deleted: false },
     include: {
@@ -18,29 +17,59 @@ export async function getProduksi() {
         select: {
           kode_lahan: true,
           nama_lahan: true,
+          latitude: true,
+          longitude: true,
+          luas_lahan: true,
           petani: {
             select: {
               nama_lengkap: true,
-              desa: { select: { nama_desa: true, kecamatan: { select: { nama_kecamatan: true } } } }
+              desa: {
+                select: {
+                  nama_desa: true,
+                  kecamatan: { select: { nama_kecamatan: true } }
+                }
+              }
             }
           },
         }
       },
-      komoditas: { select: { nama_komoditas: true, satuan: true, subsektor: true } },
-      petani: { select: { nama_lengkap: true, nik: true } }
+      komoditas: {
+        select: {
+          nama_komoditas: true,
+          satuan_rel: { select: { nama_satuan: true, simbol: true } },
+          subsektor_rel: { select: { nama_subsektor: true } },
+        }
+      },
+      petani: { select: { nama_lengkap: true, nik: true } },
+      satuan_produksi: { select: { nama_satuan: true, simbol: true } },
+      satuan_harga: { select: { nama_satuan: true, simbol: true } },
+      foto_berkala: { orderBy: { tanggal_foto: 'asc' } },
     },
     orderBy: { created_at: 'desc' },
   });
   return serialize(data);
 }
 
-export async function getLahanKomoditasOptions() {
+export async function getLahanKomoditasOptions(userSession?: any) {
+  let lahanWhereClause: any = { is_deleted: false };
+
+  // Jika user yang login adalah petani, filter berdasarkan relasi nik
+  if (userSession && userSession.role === 'R009' && userSession.nik) {
+    lahanWhereClause = {
+      is_deleted: false,
+      petani: { nik: userSession.nik }
+    };
+  }
+
   const lahanData = await db.trx_lahan.findMany({
-    where: { is_deleted: false },
+    where: lahanWhereClause,
     select: {
       id_lahan: true,
       kode_lahan: true,
       nama_lahan: true,
+      latitude: true,
+      longitude: true,
+      luas_lahan: true,
       petani: { select: { id_petani: true, nama_lengkap: true } },
     },
     orderBy: { kode_lahan: 'asc' },
@@ -51,18 +80,16 @@ export async function getLahanKomoditasOptions() {
     select: {
       id_komoditas: true,
       nama_komoditas: true,
-      satuan: true
+      satuan_rel: { select: { nama_satuan: true, simbol: true } },
     },
     orderBy: { nama_komoditas: 'asc' },
   });
 
-  const petaniData = await db.mst_petani.findMany({
-    where: { is_deleted: false, status_aktif: true },
-    select: { id_petani: true, nama_lengkap: true, nik: true },
-    orderBy: { nama_lengkap: 'asc' },
+  const satuanData = await db.mst_satuan.findMany({
+    orderBy: { nama_satuan: 'asc' }
   });
 
-  return serialize({ lahan: lahanData, komoditas: komoditasData, petani: petaniData });
+  return serialize({ lahan: lahanData, komoditas: komoditasData, satuan: satuanData });
 }
 
 export async function createProduksi(data: any) {
@@ -79,13 +106,12 @@ export async function createProduksi(data: any) {
       nilaiProduksi = produksiVal * hargaJual;
     }
 
-    // Ambil id_petani dari lahan
     const lahan = await db.trx_lahan.findUnique({
       where: { id_lahan: BigInt(data.id_lahan) },
       select: { id_petani: true }
     });
 
-    await db.trx_produksi.create({
+    const produksi = await db.trx_produksi.create({
       data: {
         id_petani: lahan!.id_petani,
         id_lahan: BigInt(data.id_lahan),
@@ -100,13 +126,24 @@ export async function createProduksi(data: any) {
         produksi: produksiVal,
         produktivitas: produktivitas,
         harga_jual: hargaJual,
+        id_satuan_produksi: data.id_satuan_produksi ? parseInt(data.id_satuan_produksi) : null,
+        id_satuan_harga: data.id_satuan_harga ? parseInt(data.id_satuan_harga) : null,
         nilai_produksi: nilaiProduksi,
         keterangan: data.keterangan || null,
         status_verifikasi: 'DRAFT',
       },
     });
+
+    // Update koordinat lahan jika disediakan
+    if (data.latitude && data.longitude) {
+      await db.trx_lahan.update({
+        where: { id_lahan: BigInt(data.id_lahan) },
+        data: { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) },
+      });
+    }
+
     revalidatePath('/transaksi/produksi');
-    return { success: true };
+    return { success: true, id_produksi: produksi.id_produksi.toString() };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -140,11 +177,22 @@ export async function updateProduksi(id: string, data: any) {
         produksi: produksiVal,
         produktivitas: produktivitas,
         harga_jual: hargaJual,
+        id_satuan_produksi: data.id_satuan_produksi ? parseInt(data.id_satuan_produksi) : null,
+        id_satuan_harga: data.id_satuan_harga ? parseInt(data.id_satuan_harga) : null,
         nilai_produksi: nilaiProduksi,
         keterangan: data.keterangan || null,
         status_verifikasi: data.status_verifikasi || 'DRAFT',
       },
     });
+
+    // Update koordinat lahan jika disediakan
+    if (data.latitude && data.longitude) {
+      await db.trx_lahan.update({
+        where: { id_lahan: BigInt(data.id_lahan) },
+        data: { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) },
+      });
+    }
+
     revalidatePath('/transaksi/produksi');
     return { success: true };
   } catch (error: any) {
@@ -173,6 +221,44 @@ export async function verifyProduksi(id: string, status: string, catatan?: strin
         status_verifikasi: status,
         catatan_verifikasi: catatan || null,
       },
+    });
+    revalidatePath('/transaksi/produksi');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/** Simpan foto berkala ke trx_produksi_foto */
+export async function uploadFotoProduksi(data: {
+  id_produksi: string;
+  foto_path: string;
+  keterangan?: string;
+  tanggal_foto: string;
+  periode?: string;
+}) {
+  try {
+    await db.trx_produksi_foto.create({
+      data: {
+        id_produksi: BigInt(data.id_produksi),
+        foto_path: data.foto_path,
+        keterangan: data.keterangan || null,
+        tanggal_foto: new Date(data.tanggal_foto),
+        periode: data.periode || null,
+      },
+    });
+    revalidatePath('/transaksi/produksi');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/** Hapus foto berkala */
+export async function deleteFotoProduksi(id_foto: string) {
+  try {
+    await db.trx_produksi_foto.delete({
+      where: { id_foto: BigInt(id_foto) },
     });
     revalidatePath('/transaksi/produksi');
     return { success: true };

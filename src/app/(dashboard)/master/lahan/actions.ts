@@ -22,7 +22,8 @@ export async function getLahan() {
           desa: { select: { nama_desa: true, kecamatan: { select: { nama_kecamatan: true } } } }
         }
       },
-      dusun: { select: { nama_dusun: true } }
+      desa: { select: { nama_desa: true } },
+      status_lahan_rel: { select: { nama_status: true } }
     },
     orderBy: { id_lahan: 'desc' },
   });
@@ -42,17 +43,14 @@ export async function getPetaniDesaOptions() {
     orderBy: { nama_lengkap: 'asc' },
   });
 
-  const dusunData = await db.mst_dusun.findMany({
-    where: { is_deleted: false, status_aktif: true },
-    select: {
-      id_dusun: true,
-      nama_dusun: true,
-      id_desa: true
-    },
-    orderBy: { nama_dusun: 'asc' },
-  });
+  return serialize({ petani: petaniData, dusun: [] });
+}
 
-  return serialize({ petani: petaniData, dusun: dusunData });
+export async function getStatusLahanOptions() {
+  const data = await db.mst_status_lahan.findMany({
+    orderBy: { nama_status: 'asc' }
+  });
+  return serialize(data);
 }
 
 export async function createLahan(data: any) {
@@ -61,13 +59,10 @@ export async function createLahan(data: any) {
       data: {
         id_petani: BigInt(data.id_petani),
         id_desa: data.id_desa ? BigInt(data.id_desa) : null,
-        id_dusun: data.id_dusun ? BigInt(data.id_dusun) : null,
-        id_rw: data.id_rw ? BigInt(data.id_rw) : null,
-        id_rt: data.id_rt ? BigInt(data.id_rt) : null,
         kode_lahan: data.kode_lahan,
         nama_lahan: data.nama_lahan || null,
         luas_lahan: parseFloat(data.luas_lahan),
-        status_lahan: data.status_lahan || 'MILIK',
+        id_status_lahan: data.id_status_lahan ? parseInt(data.id_status_lahan) : null,
         jenis_irigasi: data.jenis_irigasi || null,
         jenis_tanah: data.jenis_tanah || null,
         keterangan: data.keterangan || null,
@@ -90,13 +85,10 @@ export async function updateLahan(id: string, data: any) {
       data: {
         id_petani: BigInt(data.id_petani),
         id_desa: data.id_desa ? BigInt(data.id_desa) : null,
-        id_dusun: data.id_dusun ? BigInt(data.id_dusun) : null,
-        id_rw: data.id_rw ? BigInt(data.id_rw) : null,
-        id_rt: data.id_rt ? BigInt(data.id_rt) : null,
         kode_lahan: data.kode_lahan,
         nama_lahan: data.nama_lahan || null,
         luas_lahan: parseFloat(data.luas_lahan),
-        status_lahan: data.status_lahan || 'MILIK',
+        id_status_lahan: data.id_status_lahan ? parseInt(data.id_status_lahan) : null,
         jenis_irigasi: data.jenis_irigasi || null,
         jenis_tanah: data.jenis_tanah || null,
         keterangan: data.keterangan || null,

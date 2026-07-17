@@ -19,7 +19,7 @@ datasource db {
 
 model mst_provinsi {
   id_provinsi   BigInt   @id @default(autoincrement())
-  kode_provinsi String   @unique @db.Char(2)
+  kode_provinsi String   @unique @db.Char(5)
   nama_provinsi String   @unique @db.VarChar(100)
   singkatan     String?  @db.VarChar(20)
   status_aktif  Boolean  @default(true)
@@ -30,6 +30,7 @@ model mst_provinsi {
   is_deleted    Boolean  @default(false)
 
   kabupaten mst_kabupaten[]
+  trx_lahan trx_lahan[]
 }
 
 model mst_kabupaten {
@@ -49,6 +50,7 @@ model mst_kabupaten {
 
   provinsi  mst_provinsi    @relation(fields: [id_provinsi], references: [id_provinsi])
   kecamatan mst_kecamatan[]
+  trx_lahan trx_lahan[]
 }
 
 model mst_kecamatan {
@@ -68,6 +70,7 @@ model mst_kecamatan {
 
   kabupaten mst_kabupaten @relation(fields: [id_kabupaten], references: [id_kabupaten])
   desa      mst_desa[]
+  trx_lahan trx_lahan[]
 }
 
 model mst_desa {
@@ -92,7 +95,6 @@ model mst_desa {
   is_deleted      Boolean  @default(false)
 
   kecamatan mst_kecamatan  @relation(fields: [id_kecamatan], references: [id_kecamatan])
-  dusun     mst_dusun[]
   gapoktan  mst_gapoktan[]
   poktan    mst_poktan[]
   petani    mst_petani[]
@@ -100,27 +102,7 @@ model mst_desa {
   lahan     trx_lahan[]
 }
 
-model mst_dusun {
-  id_dusun        BigInt   @id @default(autoincrement())
-  id_desa         BigInt
-  kode_dusun      String?  @db.VarChar(20)
-  nama_dusun      String   @db.VarChar(150)
-  kepala_dusun    String?  @db.VarChar(150)
-  jumlah_rt       Int?
-  jumlah_rw       Int?
-  jumlah_penduduk Int?
-  luas_wilayah    Decimal? @db.Decimal(10, 2)
-  status_aktif    Boolean  @default(true)
-  created_by      BigInt?
-  created_at      DateTime @default(now())
-  updated_by      BigInt?
-  updated_at      DateTime @updatedAt
-  is_deleted      Boolean  @default(false)
 
-  desa  mst_desa    @relation(fields: [id_desa], references: [id_desa])
-  lahan trx_lahan[]
-  rw    mst_rw[]
-}
 
 // ──────────────────────────────────────────────────────────
 // BAB III: MASTER PENGGUNA (USER MANAGEMENT)
@@ -439,8 +421,8 @@ model mst_komoditas {
   id_komoditas   BigInt   @id @default(autoincrement())
   kode_komoditas String   @unique @db.VarChar(10)
   nama_komoditas String   @db.VarChar(100)
-  subsektor      String   @db.VarChar(5) // TP/HT/PB/PK/PT
-  satuan         String?  @db.VarChar(20)
+  id_subsektor   Int?
+  id_satuan      Int?
   deskripsi      String?  @db.Text
   gambar         String?  @db.VarChar(255)
   status_aktif   Boolean  @default(true)
@@ -450,62 +432,13 @@ model mst_komoditas {
   updated_at     DateTime @updatedAt
   is_deleted     Boolean  @default(false)
 
-  produksi     trx_produksi[]
-  pemasaran    trx_pemasaran[]
-  poktan_utama mst_poktan[]
+  subsektor_rel mst_subsektor?  @relation(fields: [id_subsektor], references: [id_subsektor])
+  satuan_rel    mst_satuan?     @relation(fields: [id_satuan], references: [id_satuan])
+  produksi      trx_produksi[]
+  pemasaran     trx_pemasaran[]
+  poktan_utama  mst_poktan[]
 }
 
-// ──────────────────────────────────────────────────────────
-// MASTER RW (RUKUN WARGA)
-// ──────────────────────────────────────────────────────────
-
-model mst_rw {
-  id_rw        BigInt   @id @default(autoincrement())
-  id_dusun     BigInt
-  kode_rw      String   @db.VarChar(10)
-  nama_rw      String   @db.VarChar(50)
-  ketua_rw     String?  @db.VarChar(150)
-  no_hp        String?  @db.VarChar(20)
-  jumlah_rt    Int?
-  status_aktif Boolean  @default(true)
-  created_by   BigInt?
-  created_at   DateTime @default(now())
-  updated_by   BigInt?
-  updated_at   DateTime @updatedAt
-  is_deleted   Boolean  @default(false)
-
-  dusun     mst_dusun   @relation(fields: [id_dusun], references: [id_dusun])
-  rt        mst_rt[]
-  trx_lahan trx_lahan[]
-
-  @@unique([id_dusun, kode_rw])
-}
-
-// ──────────────────────────────────────────────────────────
-// MASTER RT (RUKUN TETANGGA)
-// ──────────────────────────────────────────────────────────
-
-model mst_rt {
-  id_rt        BigInt   @id @default(autoincrement())
-  id_rw        BigInt
-  kode_rt      String   @db.VarChar(10)
-  nama_rt      String   @db.VarChar(50)
-  ketua_rt     String?  @db.VarChar(150)
-  no_hp        String?  @db.VarChar(20)
-  jumlah_kk    Int?
-  jumlah_jiwa  Int?
-  status_aktif Boolean  @default(true)
-  created_by   BigInt?
-  created_at   DateTime @default(now())
-  updated_by   BigInt?
-  updated_at   DateTime @updatedAt
-  is_deleted   Boolean  @default(false)
-
-  rw        mst_rw      @relation(fields: [id_rw], references: [id_rw])
-  trx_lahan trx_lahan[]
-
-  @@unique([id_rw, kode_rt])
-}
 
 // ──────────────────────────────────────────────────────────
 // BAB VI: TRANSAKSI LAHAN
@@ -515,17 +448,17 @@ model trx_lahan {
   id_lahan          BigInt   @id @default(autoincrement())
   id_petani         BigInt
   id_desa           BigInt?
-  id_dusun          BigInt?
-  id_rw             BigInt?
-  id_rt             BigInt?
+  id_provinsi       BigInt?
+  id_kabupaten      BigInt?
+  id_kecamatan      BigInt?
   kode_lahan        String   @unique @db.VarChar(20)
-  nama_lahan        String?  @db.VarChar(100) // Nama/blok lahan
+  nama_lahan        String?  @db.VarChar(100)
   luas_lahan        Decimal  @db.Decimal(10, 2)
-  status_lahan      String   @db.VarChar(30) // MILIK/SEWA/BAGI_HASIL/PERHUTANAN_SOSIAL/LAINNYA
-  jenis_irigasi     String?  @db.VarChar(50) // IRIGASI_TEKNIS/SETENGAH_TEKNIS/SEDERHANA/TADAH_HUJAN
+  id_status_lahan   Int?
+  jenis_irigasi     String?  @db.VarChar(50)
   jenis_tanah       String?  @db.VarChar(50)
   sumber_air        String?  @db.VarChar(50)
-  ketinggian        Int? // mdpl
+  ketinggian        Int?
   latitude          Decimal? @db.Decimal(10, 8)
   longitude         Decimal? @db.Decimal(11, 8)
   foto_lahan        String?  @db.VarChar(255)
@@ -537,12 +470,13 @@ model trx_lahan {
   updated_at        DateTime @updatedAt
   is_deleted        Boolean  @default(false)
 
-  petani   mst_petani     @relation(fields: [id_petani], references: [id_petani])
-  desa     mst_desa?      @relation(fields: [id_desa], references: [id_desa], onDelete: SetNull)
-  dusun    mst_dusun?     @relation(fields: [id_dusun], references: [id_dusun], onDelete: SetNull)
-  rw       mst_rw?        @relation(fields: [id_rw], references: [id_rw], onDelete: SetNull)
-  rt       mst_rt?        @relation(fields: [id_rt], references: [id_rt], onDelete: SetNull)
-  produksi trx_produksi[]
+  petani           mst_petani        @relation(fields: [id_petani], references: [id_petani])
+  desa             mst_desa?         @relation(fields: [id_desa], references: [id_desa], onDelete: SetNull)
+  provinsi         mst_provinsi?     @relation(fields: [id_provinsi], references: [id_provinsi])
+  kabupaten        mst_kabupaten?    @relation(fields: [id_kabupaten], references: [id_kabupaten])
+  kecamatan        mst_kecamatan?    @relation(fields: [id_kecamatan], references: [id_kecamatan])
+  status_lahan_rel mst_status_lahan? @relation(fields: [id_status_lahan], references: [id_status])
+  produksi         trx_produksi[]
 }
 
 // ──────────────────────────────────────────────────────────
@@ -575,10 +509,15 @@ model trx_produksi {
   updated_by         BigInt?
   updated_at         DateTime  @updatedAt
   is_deleted         Boolean   @default(false)
+  id_satuan_produksi Int?
+  id_satuan_harga    Int?
 
-  petani    mst_petani    @relation(fields: [id_petani], references: [id_petani])
-  lahan     trx_lahan     @relation(fields: [id_lahan], references: [id_lahan])
-  komoditas mst_komoditas @relation(fields: [id_komoditas], references: [id_komoditas])
+  petani          mst_petani          @relation(fields: [id_petani], references: [id_petani])
+  lahan           trx_lahan           @relation(fields: [id_lahan], references: [id_lahan])
+  komoditas       mst_komoditas       @relation(fields: [id_komoditas], references: [id_komoditas])
+  satuan_produksi mst_satuan?         @relation("SatuanProduksi", fields: [id_satuan_produksi], references: [id_satuan])
+  satuan_harga    mst_satuan?         @relation("SatuanHarga", fields: [id_satuan_harga], references: [id_satuan])
+  foto_berkala    trx_produksi_foto[]
 }
 
 // ──────────────────────────────────────────────────────────
@@ -617,12 +556,12 @@ model trx_bantuan {
   id_petani          BigInt?
   id_poktan          BigInt?
   kode_bantuan       String    @unique @db.VarChar(20)
-  jenis_bantuan      String    @db.VarChar(50) // PUPUK/BENIH/ALSINTAN/MODAL/INFRASTRUKTUR/LAINNYA
+  id_jenis_bantuan   Int?
   nama_bantuan       String    @db.VarChar(150)
   sumber_dana        String?   @db.VarChar(100) // APBN/APBD_PROV/APBD_KAB/SWASTA
   nilai_bantuan      Decimal?  @db.Decimal(18, 2)
   volume             Decimal?  @db.Decimal(15, 2)
-  satuan             String?   @db.VarChar(30)
+  id_satuan          Int?
   tanggal_pengajuan  DateTime? @db.Date
   tanggal_distribusi DateTime? @db.Date
   status_distribusi  String    @default("DIAJUKAN") @db.VarChar(20) // DIAJUKAN/DISETUJUI/DIDISTRIBUSIKAN/DITOLAK
@@ -635,5 +574,65 @@ model trx_bantuan {
   updated_at         DateTime  @updatedAt
   is_deleted         Boolean   @default(false)
 
-  petani mst_petani? @relation(fields: [id_petani], references: [id_petani])
+  petani            mst_petani?         @relation(fields: [id_petani], references: [id_petani])
+  jenis_bantuan_rel mst_jenis_bantuan?  @relation(fields: [id_jenis_bantuan], references: [id_jenis])
+  satuan_rel        mst_satuan?         @relation(fields: [id_satuan], references: [id_satuan])
+}
+
+// ──────────────────────────────────────────────────────────
+// MASTER SUBSEKTOR, SATUAN, DAN FOTO PRODUKSI
+// ──────────────────────────────────────────────────────────
+
+model mst_subsektor {
+  id_subsektor   Int      @id @default(autoincrement())
+  kode_subsektor String   @unique @db.VarChar(10)
+  nama_subsektor String   @db.VarChar(100)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  komoditas mst_komoditas[]
+}
+
+model mst_satuan {
+  id_satuan   Int      @id @default(autoincrement())
+  kode_satuan String   @unique @db.VarChar(10) // ST001, ST002
+  nama_satuan String   @db.VarChar(50) // Kilogram, Ton
+  simbol      String   @db.VarChar(10) // kg, ton
+  created_at  DateTime @default(now())
+
+  produksi_hasil trx_produksi[] @relation("SatuanProduksi")
+  produksi_harga trx_produksi[] @relation("SatuanHarga")
+  komoditas      mst_komoditas[]
+  bantuan        trx_bantuan[]
+}
+
+model mst_status_lahan {
+  id_status   Int      @id @default(autoincrement())
+  kode_status String   @unique @db.VarChar(10)
+  nama_status String   @db.VarChar(50)
+  created_at  DateTime @default(now())
+
+  trx_lahan trx_lahan[]
+}
+
+model mst_jenis_bantuan {
+  id_jenis     Int      @id @default(autoincrement())
+  kode_bantuan String   @unique @db.VarChar(10)
+  nama_bantuan String   @db.VarChar(100)
+  created_at   DateTime @default(now())
+
+  trx_bantuan trx_bantuan[]
+}
+
+model trx_produksi_foto {
+  id_foto      BigInt   @id @default(autoincrement())
+  id_produksi  BigInt
+  foto_path    String   @db.VarChar(255)
+  keterangan   String?  @db.Text
+  tanggal_foto DateTime @db.Date
+  periode      String?  @db.VarChar(30) // Label 3-bulanan: "Jan-Mar 2024", "2024-Q1"
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  produksi trx_produksi @relation(fields: [id_produksi], references: [id_produksi])
 }

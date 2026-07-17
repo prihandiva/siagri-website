@@ -21,6 +21,8 @@ export async function getBantuan() {
           desa: { select: { nama_desa: true } }
         }
       },
+      jenis_bantuan_rel: true,
+      satuan_rel: true
     },
     orderBy: { created_at: 'desc' },
   });
@@ -43,6 +45,12 @@ export async function getBantuanOptions() {
   return serialize({ petani: petaniData, poktan: poktanData });
 }
 
+export async function getMasterBantuanOptions() {
+  const jenis = await db.mst_jenis_bantuan.findMany({ orderBy: { nama_bantuan: 'asc' } });
+  const satuan = await db.mst_satuan.findMany({ orderBy: { nama_satuan: 'asc' } });
+  return serialize({ jenis, satuan });
+}
+
 export async function createBantuan(data: any) {
   try {
     await db.trx_bantuan.create({
@@ -50,12 +58,12 @@ export async function createBantuan(data: any) {
         id_petani: data.id_petani ? BigInt(data.id_petani) : null,
         id_poktan: data.id_poktan ? BigInt(data.id_poktan) : null,
         kode_bantuan: `BNT-${Date.now()}`,
-        jenis_bantuan: data.jenis_bantuan,
+        id_jenis_bantuan: data.id_jenis_bantuan ? Number(data.id_jenis_bantuan) : null,
         nama_bantuan: data.nama_bantuan,
         sumber_dana: data.sumber_dana || null,
         nilai_bantuan: data.nilai_bantuan ? parseFloat(data.nilai_bantuan) : null,
         volume: data.volume ? parseFloat(data.volume) : null,
-        satuan: data.satuan || null,
+        id_satuan: data.id_satuan ? Number(data.id_satuan) : null,
         tanggal_pengajuan: data.tanggal_pengajuan ? new Date(data.tanggal_pengajuan) : null,
         tanggal_distribusi: data.tanggal_distribusi ? new Date(data.tanggal_distribusi) : null,
         status_distribusi: data.status_distribusi || 'DIAJUKAN',
@@ -76,12 +84,12 @@ export async function updateBantuan(id: string, data: any) {
       data: {
         id_petani: data.id_petani ? BigInt(data.id_petani) : null,
         id_poktan: data.id_poktan ? BigInt(data.id_poktan) : null,
-        jenis_bantuan: data.jenis_bantuan,
+        id_jenis_bantuan: data.id_jenis_bantuan ? Number(data.id_jenis_bantuan) : null,
         nama_bantuan: data.nama_bantuan,
         sumber_dana: data.sumber_dana || null,
         nilai_bantuan: data.nilai_bantuan ? parseFloat(data.nilai_bantuan) : null,
         volume: data.volume ? parseFloat(data.volume) : null,
-        satuan: data.satuan || null,
+        id_satuan: data.id_satuan ? Number(data.id_satuan) : null,
         tanggal_pengajuan: data.tanggal_pengajuan ? new Date(data.tanggal_pengajuan) : null,
         tanggal_distribusi: data.tanggal_distribusi ? new Date(data.tanggal_distribusi) : null,
         status_distribusi: data.status_distribusi || 'DIAJUKAN',

@@ -14,28 +14,28 @@ export async function getGapoktan() {
     where: { is_deleted: false },
     include: {
       desa: {
-        select: { 
-          nama_desa: true,
-          kecamatan: { select: { nama_kecamatan: true } }
-        }
+        select: { nama_desa: true, kecamatan: { select: { nama_kecamatan: true } } }
+      },
+      pengurus: {
+        where: { jabatan: 'Ketua', is_deleted: false, aktif: true }
+      },
+      poktan: {
+        where: { is_deleted: false },
+        select: { id_poktan: true, nama_poktan: true, ketua_poktan: true, kode_poktan: true, anggota: { select: { _count: true } } }
       }
     },
     orderBy: { nama_gapoktan: 'asc' },
   });
-  return serialize(data);
-}
 
-export async function getDesaOptions() {
-  const data = await db.mst_desa.findMany({
-    where: { is_deleted: false, status_aktif: true },
-    select: { 
-      id_desa: true, 
-      nama_desa: true,
-      kecamatan: { select: { nama_kecamatan: true } }
-    },
-    orderBy: { nama_desa: 'asc' },
-  });
-  return serialize(data);
+  // Karena schema gapoktan berbeda, kita attach list_poktan & ketua
+  const formattedData = data.map(item => ({
+    ...item,
+    id_ketua: item.pengurus[0]?.id_petani || '',
+    ketua_gapoktan: item.pengurus[0]?.nama || '',
+    list_poktan: item.poktan || []
+  }));
+
+  return serialize(formattedData);
 }
 
 export async function createGapoktan(data: {
@@ -44,36 +44,35 @@ export async function createGapoktan(data: {
   nama_gapoktan: string;
   id_ketua?: string;
   ketua_gapoktan?: string;
-  id_sekretaris?: string;
-  sekretaris_gapoktan?: string;
-  id_bendahara?: string;
-  bendahara_gapoktan?: string;
-  no_sk?: string;
+  nomor_sk?: string;
   tahun_berdiri?: string;
 }) {
   try {
-    await db.mst_gapoktan.create({
+    const newGapoktan = await db.mst_gapoktan.create({
       data: {
         id_desa: BigInt(data.id_desa),
         kode_gapoktan: data.kode_gapoktan,
         nama_gapoktan: data.nama_gapoktan,
-        id_ketua: data.id_ketua ? BigInt(data.id_ketua) : null,
-        ketua: data.ketua_gapoktan || null,
-        id_sekretaris: data.id_sekretaris ? BigInt(data.id_sekretaris) : null,
-        sekretaris: data.sekretaris_gapoktan || null,
-        id_bendahara: data.id_bendahara ? BigInt(data.id_bendahara) : null,
-        bendahara: data.bendahara_gapoktan || null,
-        nomor_registrasi: data.no_sk || null,
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
         status_aktif: true,
       },
     });
+
+    if (data.id_ketua || data.ketua_gapoktan) {
+      await db.mst_pengurus_gapoktan.create({
+        data: {
+          id_gapoktan: newGapoktan.id_gapoktan,
+          id_petani: data.id_ketua ? BigInt(data.id_ketua) : null,
+          nama: data.ketua_gapoktan || '',
+          jabatan: 'Ketua',
+        }
+      });
+    }
+
     revalidatePath('/master/gapoktan');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'Kode Gapoktan sudah ada.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'Kode Gapoktan sudah ada.' };
     return { success: false, error: error.message };
   }
 }
@@ -86,11 +85,7 @@ export async function updateGapoktan(
     nama_gapoktan: string;
     id_ketua?: string;
     ketua_gapoktan?: string;
-    id_sekretaris?: string;
-    sekretaris_gapoktan?: string;
-    id_bendahara?: string;
-    bendahara_gapoktan?: string;
-    no_sk?: string;
+    nomor_sk?: string;
     tahun_berdiri?: string;
     status_aktif: boolean;
   }
@@ -102,23 +97,38 @@ export async function updateGapoktan(
         id_desa: BigInt(data.id_desa),
         kode_gapoktan: data.kode_gapoktan,
         nama_gapoktan: data.nama_gapoktan,
-        id_ketua: data.id_ketua ? BigInt(data.id_ketua) : null,
-        ketua: data.ketua_gapoktan || null,
-        id_sekretaris: data.id_sekretaris ? BigInt(data.id_sekretaris) : null,
-        sekretaris: data.sekretaris_gapoktan || null,
-        id_bendahara: data.id_bendahara ? BigInt(data.id_bendahara) : null,
-        bendahara: data.bendahara_gapoktan || null,
-        nomor_registrasi: data.no_sk || null,
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
         status_aktif: data.status_aktif,
       },
     });
+
+    const existingKetua = await db.mst_pengurus_gapoktan.findFirst({
+      where: { id_gapoktan: BigInt(id), jabatan: 'Ketua', is_deleted: false }
+    });
+
+    if (existingKetua) {
+      await db.mst_pengurus_gapoktan.update({
+        where: { id_pengurus: existingKetua.id_pengurus },
+        data: {
+          id_petani: data.id_ketua ? BigInt(data.id_ketua) : null,
+          nama: data.ketua_gapoktan || '',
+        }
+      });
+    } else if (data.id_ketua || data.ketua_gapoktan) {
+      await db.mst_pengurus_gapoktan.create({
+        data: {
+          id_gapoktan: BigInt(id),
+          id_petani: data.id_ketua ? BigInt(data.id_ketua) : null,
+          nama: data.ketua_gapoktan || '',
+          jabatan: 'Ketua',
+        }
+      });
+    }
+
     revalidatePath('/master/gapoktan');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'Kode Gapoktan sudah digunakan.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'Kode Gapoktan sudah digunakan.' };
     return { success: false, error: error.message };
   }
 }
@@ -134,4 +144,13 @@ export async function deleteGapoktan(id: string) {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
+}
+
+export async function getDesaOptions() {
+  const data = await db.mst_desa.findMany({
+    where: { is_deleted: false, status_aktif: true },
+    select: { id_desa: true, nama_desa: true, kecamatan: { select: { nama_kecamatan: true } } },
+    orderBy: { nama_desa: 'asc' }
+  });
+  return serialize(data);
 }

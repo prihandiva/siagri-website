@@ -49,33 +49,6 @@ export async function GET(request: Request) {
         });
         break;
 
-      case 'dusun':
-        const id_desa = searchParams.get('id_desa');
-        if (!id_desa) return NextResponse.json({ error: 'id_desa required' }, { status: 400 });
-        data = await db.mst_dusun.findMany({
-          where: { is_deleted: false, status_aktif: true, id_desa: BigInt(id_desa) },
-          orderBy: { nama_dusun: 'asc' },
-        });
-        break;
-
-      case 'rw':
-        const id_dusun = searchParams.get('id_dusun');
-        if (!id_dusun) return NextResponse.json({ error: 'id_dusun required' }, { status: 400 });
-        data = await db.mst_rw.findMany({
-          where: { is_deleted: false, status_aktif: true, id_dusun: BigInt(id_dusun) },
-          orderBy: { nama_rw: 'asc' },
-        });
-        break;
-
-      case 'rt':
-        const id_rw = searchParams.get('id_rw');
-        if (!id_rw) return NextResponse.json({ error: 'id_rw required' }, { status: 400 });
-        data = await db.mst_rt.findMany({
-          where: { is_deleted: false, status_aktif: true, id_rw: BigInt(id_rw) },
-          orderBy: { nama_rt: 'asc' },
-        });
-        break;
-
       default:
         return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
     }

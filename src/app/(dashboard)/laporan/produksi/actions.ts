@@ -40,7 +40,7 @@ export async function getLaporanProduksi(filters: { id_desa?: string, tahun?: st
         }
       },
       komoditas: {
-        select: { nama_komoditas: true, satuan: true, subsektor: true }
+        select: { nama_komoditas: true, satuan: true, subsektor_rel: { select: { nama_subsektor: true } } }
       }
     },
     orderBy: { created_at: 'desc' },

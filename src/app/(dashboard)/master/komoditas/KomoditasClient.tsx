@@ -13,8 +13,10 @@ import { createKomoditas, updateKomoditas, deleteKomoditas } from './actions';
 
 export default function KomoditasClient({ 
   initialData, 
+  options 
 }: { 
-  initialData: any[]
+  initialData: any[],
+  options?: { subsektor: any[], satuan: any[] }
 }) {
   const [data] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,28 +30,32 @@ export default function KomoditasClient({
   const [formData, setFormData] = useState({ 
     kode_komoditas: '', 
     nama_komoditas: '', 
-    subsektor: 'TP',
-    satuan: '',
+    id_subsektor: '',
+    id_satuan: '',
     deskripsi: '',
     status_aktif: true 
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const subsektorOpts = [
-    { label: 'Tanaman Pangan (TP)', value: 'TP' },
-    { label: 'Hortikultura (HT)', value: 'HT' },
-    { label: 'Perkebunan (PB)', value: 'PB' },
-    { label: 'Peternakan (PT)', value: 'PT' },
-    { label: 'Perikanan (PK)', value: 'PK' },
-  ];
+  const subsektorList = options?.subsektor ?? [];
+  const subsektorOpts = subsektorList.map((s: any) => ({
+    label: `${s.nama_subsektor} (${s.kode_subsektor})`,
+    value: s.id_subsektor?.toString()
+  }));
+
+  const satuanList = options?.satuan ?? [];
+  const satuanOpts = [{ label: 'Pilih Satuan', value: '' }, ...satuanList.map((s: any) => ({
+    label: `${s.nama_satuan} (${s.simbol})`,
+    value: s.id_satuan?.toString()
+  }))];
 
   // Filtered data
   const filteredData = useMemo(() => {
     return data.filter(item => 
       item.nama_komoditas.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.kode_komoditas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.subsektor.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.subsektor_rel?.nama_subsektor || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
 
@@ -61,8 +67,8 @@ export default function KomoditasClient({
       setFormData({
         kode_komoditas: item.kode_komoditas,
         nama_komoditas: item.nama_komoditas,
-        subsektor: item.subsektor,
-        satuan: item.satuan || '',
+        id_subsektor: item.id_subsektor?.toString() || '',
+        id_satuan: item.id_satuan?.toString() || '',
         deskripsi: item.deskripsi || '',
         status_aktif: item.status_aktif,
       });
@@ -71,8 +77,8 @@ export default function KomoditasClient({
       setFormData({ 
         kode_komoditas: '', 
         nama_komoditas: '', 
-        subsektor: 'TP',
-        satuan: '',
+        id_subsektor: subsektorOpts.length > 0 ? subsektorOpts[0].value.toString() : '',
+        id_satuan: '',
         deskripsi: '',
         status_aktif: true 
       });
@@ -124,10 +130,14 @@ export default function KomoditasClient({
       </div>
     )},
     { key: 'subsektor', header: 'Subsektor', render: (item: any) => {
-      const sub = subsektorOpts.find(s => s.value === item.subsektor);
-      return sub ? sub.label : item.subsektor;
+      return item.subsektor_rel?.nama_subsektor || '-';
     }},
-    { key: 'satuan', header: 'Satuan', render: (item: any) => item.satuan || '-' },
+    { key: 'satuan', header: 'Satuan', render: (item: any) => {
+      if (item.satuan_rel) {
+        return `${item.satuan_rel.nama_satuan} (${item.satuan_rel.simbol})`;
+      }
+      return '-';
+    }},
     { 
       key: 'status_aktif', 
       header: 'Status',
@@ -184,8 +194,8 @@ export default function KomoditasClient({
             <Select 
               label="Subsektor" 
               options={subsektorOpts}
-              value={formData.subsektor}
-              onChange={e => setFormData({...formData, subsektor: e.target.value})}
+              value={formData.id_subsektor}
+              onChange={e => setFormData({...formData, id_subsektor: e.target.value})}
               required
             />
             <Input 
@@ -206,11 +216,11 @@ export default function KomoditasClient({
               required
               placeholder="Contoh: Padi"
             />
-            <Input 
+            <Select 
               label="Satuan" 
-              value={formData.satuan} 
-              onChange={e => setFormData({...formData, satuan: e.target.value})}
-              placeholder="Contoh: Ton, Kg, Ekor"
+              options={satuanOpts}
+              value={formData.id_satuan}
+              onChange={e => setFormData({...formData, id_satuan: e.target.value})}
             />
           </div>
 

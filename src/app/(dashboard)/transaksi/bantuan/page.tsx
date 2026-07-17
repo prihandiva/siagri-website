@@ -1,6 +1,6 @@
 import React from 'react';
 import BantuanClient from './BantuanClient';
-import { getBantuan, getBantuanOptions } from './actions';
+import { getBantuan, getBantuanOptions, getMasterBantuanOptions } from './actions';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 export default async function BantuanPage() {
   const data = await getBantuan();
   const options = await getBantuanOptions();
+  const masterOpts = await getMasterBantuanOptions();
 
-  return <BantuanClient initialData={data} options={options} />;
+  return <BantuanClient initialData={data} options={{ ...options, ...masterOpts }} />;
 }

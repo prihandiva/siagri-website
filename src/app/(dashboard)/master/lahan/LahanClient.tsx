@@ -17,7 +17,7 @@ export default function LahanClient({
   options 
 }: { 
   initialData: any[],
-  options: { petani: any[], dusun: any[] } 
+  options: { petani: any[], dusun: any[], status_lahan: any[] } 
 }) {
   const [data] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,13 +29,10 @@ export default function LahanClient({
   const [formData, setFormData] = useState({ 
     id_petani: '',
     id_desa: '',
-    id_dusun: '',
-    id_rw: '',
-    id_rt: '',
     kode_lahan: '', 
     nama_lahan: '',
     luas_lahan: '',
-    status_lahan: 'MILIK',
+    id_status_lahan: '',
     jenis_irigasi: '',
     jenis_tanah: '',
     keterangan: '',
@@ -63,12 +60,13 @@ export default function LahanClient({
   // Petani options cascade dari pemilihan Desa (dynamicPetaniOpts)
   // Dusun options sudah tidak diperlukan karena diambil alih oleh WilayahSelector
 
+  const statusList = options?.status_lahan ?? [];
   const statusLahanOpts = [
-    { label: 'Milik Sendiri', value: 'MILIK' },
-    { label: 'Sewa', value: 'SEWA' },
-    { label: 'Bagi Hasil', value: 'BAGI_HASIL' },
-    { label: 'Perhutanan Sosial', value: 'PERHUTANAN_SOSIAL' },
-    { label: 'Lainnya', value: 'LAINNYA' },
+    { label: '-- Pilih Status Lahan --', value: '' },
+    ...statusList.map((s: any) => ({
+      label: s.nama_status,
+      value: s.id_status?.toString()
+    }))
   ];
 
   const irigasiOpts = [
@@ -94,13 +92,10 @@ export default function LahanClient({
       setFormData({
         id_petani: item.id_petani?.toString() || '',
         id_desa: item.id_desa?.toString() || '',
-        id_dusun: item.id_dusun?.toString() || '',
-        id_rw: item.id_rw?.toString() || '',
-        id_rt: item.id_rt?.toString() || '',
         kode_lahan: item.kode_lahan || '',
         nama_lahan: item.nama_lahan || '',
         luas_lahan: item.luas_lahan?.toString() || '',
-        status_lahan: item.status_lahan || 'MILIK',
+        id_status_lahan: item.id_status_lahan?.toString() || '',
         jenis_irigasi: item.jenis_irigasi || '',
         jenis_tanah: item.jenis_tanah || '',
         keterangan: item.keterangan || '',
@@ -110,13 +105,10 @@ export default function LahanClient({
       setFormData({ 
         id_petani: '',
         id_desa: '',
-        id_dusun: '',
-        id_rw: '',
-        id_rt: '',
         kode_lahan: '', 
         nama_lahan: '',
         luas_lahan: '',
-        status_lahan: 'MILIK',
+        id_status_lahan: '',
         jenis_irigasi: '',
         jenis_tanah: '',
         keterangan: '',
@@ -180,7 +172,7 @@ export default function LahanClient({
       <span className="font-medium">{parseFloat(item.luas_lahan || 0).toFixed(2)} Ha</span>
     )},
     { key: 'status_lahan', header: 'Status Lahan', render: (item: any) => (
-      <Badge variant="info">{item.status_lahan?.replace('_', ' ')}</Badge>
+      <Badge variant="info">{item.status_lahan_rel?.nama_status || '-'}</Badge>
     )},
     { key: 'jenis_irigasi', header: 'Irigasi', render: (item: any) => item.jenis_irigasi?.replace('_', ' ') || '-' },
     {
@@ -227,16 +219,9 @@ export default function LahanClient({
           {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
           
           <WilayahSelector 
-            initialValues={{
-              id_desa: formData.id_desa,
-              id_dusun: formData.id_dusun,
-              id_rw: formData.id_rw,
-              id_rt: formData.id_rt
-            }}
-            onDesaChange={(val) => setFormData(prev => ({...prev, id_desa: val, id_petani: ''}))}
-            onDusunChange={(val) => setFormData(prev => ({...prev, id_dusun: val}))}
-            onRwChange={(val) => setFormData(prev => ({...prev, id_rw: val}))}
-            onRtChange={(val) => setFormData(prev => ({...prev, id_rt: val}))}
+            initialValues={{ id_desa: formData.id_desa }}
+            onDesaChange={val => setFormData(prev => ({...prev, id_desa: val, id_petani: ''}))}
+            label="Wilayah Lahan"
           />
           
           <Select 
@@ -278,8 +263,8 @@ export default function LahanClient({
             <Select 
               label="Status Lahan" 
               options={statusLahanOpts}
-              value={formData.status_lahan}
-              onChange={e => setFormData({...formData, status_lahan: e.target.value})}
+              value={formData.id_status_lahan}
+              onChange={e => setFormData({...formData, id_status_lahan: e.target.value})}
               required
             />
           </div>

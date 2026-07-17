@@ -16,7 +16,7 @@ export default function BantuanClient({
   options 
 }: { 
   initialData: any[],
-  options: { petani: any[], poktan: any[] } 
+  options: { petani: any[], poktan: any[], jenis?: any[], satuan?: any[] } 
 }) {
   const [data] = useState(initialData);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,11 +29,11 @@ export default function BantuanClient({
     id_poktan: '',
     id_petani: '',
     nama_bantuan: '',
-    jenis_bantuan: 'PUPUK',
+    id_jenis_bantuan: '',
     sumber_dana: '',
     nilai_bantuan: '',
     volume: '',
-    satuan: '',
+    id_satuan: '',
     tanggal_pengajuan: '',
     tanggal_distribusi: '',
     status_distribusi: 'DIAJUKAN',
@@ -52,14 +52,15 @@ export default function BantuanClient({
     ...options.petani.map(p => ({ label: p.nama_lengkap, value: p.id_petani }))
   ];
 
-  const jenisOpts = [
-    { label: 'Pupuk', value: 'PUPUK' },
-    { label: 'Benih', value: 'BENIH' },
-    { label: 'Alsintan', value: 'ALSINTAN' },
-    { label: 'Modal', value: 'MODAL' },
-    { label: 'Infrastruktur', value: 'INFRASTRUKTUR' },
-    { label: 'Lainnya', value: 'LAINNYA' },
-  ];
+  const jenisOpts = options.jenis ? [
+    { label: '-- Pilih Jenis --', value: '' },
+    ...options.jenis.map((j: any) => ({ label: j.nama_bantuan, value: j.id_jenis?.toString() }))
+  ] : [];
+
+  const satuanOpts = options.satuan ? [
+    { label: '-- Pilih Satuan --', value: '' },
+    ...options.satuan.map((s: any) => ({ label: `${s.nama_satuan} (${s.simbol})`, value: s.id_satuan?.toString() }))
+  ] : [];
 
   const statusOpts = [
     { label: 'Diajukan', value: 'DIAJUKAN' },
@@ -79,7 +80,7 @@ export default function BantuanClient({
   const filteredData = useMemo(() => {
     return data.filter(item => 
       (item.nama_bantuan || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.jenis_bantuan || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.jenis_bantuan_rel?.nama_bantuan || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.petani?.nama_lengkap || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [data, searchTerm]);
@@ -92,11 +93,11 @@ export default function BantuanClient({
         id_poktan: item.id_poktan?.toString() || '',
         id_petani: item.id_petani?.toString() || '',
         nama_bantuan: item.nama_bantuan || '',
-        jenis_bantuan: item.jenis_bantuan || 'PUPUK',
+        id_jenis_bantuan: item.id_jenis_bantuan?.toString() || '',
         sumber_dana: item.sumber_dana || '',
         nilai_bantuan: item.nilai_bantuan?.toString() || '',
         volume: item.volume?.toString() || '',
-        satuan: item.satuan || '',
+        id_satuan: item.id_satuan?.toString() || '',
         tanggal_pengajuan: item.tanggal_pengajuan ? new Date(item.tanggal_pengajuan).toISOString().split('T')[0] : '',
         tanggal_distribusi: item.tanggal_distribusi ? new Date(item.tanggal_distribusi).toISOString().split('T')[0] : '',
         status_distribusi: item.status_distribusi || 'DIAJUKAN',
@@ -108,11 +109,11 @@ export default function BantuanClient({
         id_poktan: '',
         id_petani: '',
         nama_bantuan: '',
-        jenis_bantuan: 'PUPUK',
+        id_jenis_bantuan: jenisOpts.length > 1 ? jenisOpts[1].value : '',
         sumber_dana: '',
         nilai_bantuan: '',
         volume: '',
-        satuan: '',
+        id_satuan: '',
         tanggal_pengajuan: new Date().toISOString().split('T')[0],
         tanggal_distribusi: '',
         status_distribusi: 'DIAJUKAN',
@@ -169,7 +170,7 @@ export default function BantuanClient({
     { key: 'nama_bantuan', header: 'Program Bantuan', render: (item: any) => (
       <div>
         <div className="font-medium text-[#1B5E20]">{item.nama_bantuan}</div>
-        <div className="text-xs text-gray-500">{item.jenis_bantuan} · {item.sumber_dana || '-'}</div>
+        <div className="text-xs text-gray-500">{item.jenis_bantuan_rel?.nama_bantuan || '-'} · {item.sumber_dana || '-'}</div>
       </div>
     )},
     { key: 'penerima', header: 'Penerima', render: (item: any) => (
@@ -188,7 +189,7 @@ export default function BantuanClient({
     )},
     { key: 'volume', header: 'Volume', render: (item: any) => (
       <div>
-        <div className="font-medium">{item.volume || '-'} {item.satuan || ''}</div>
+        <div className="font-medium">{item.volume || '-'} {item.satuan_rel?.simbol || ''}</div>
         {item.nilai_bantuan && <div className="text-xs text-gray-500">Rp {Number(item.nilai_bantuan).toLocaleString('id-ID')}</div>}
       </div>
     )},
@@ -251,8 +252,8 @@ export default function BantuanClient({
             <Select 
               label="Jenis Bantuan" 
               options={jenisOpts}
-              value={formData.jenis_bantuan}
-              onChange={e => setFormData({...formData, jenis_bantuan: e.target.value})}
+              value={formData.id_jenis_bantuan}
+              onChange={e => setFormData({...formData, id_jenis_bantuan: e.target.value})}
               required
             />
           </div>
@@ -281,11 +282,11 @@ export default function BantuanClient({
               onChange={e => setFormData({...formData, volume: e.target.value})}
               placeholder="Contoh: 50"
             />
-            <Input 
+            <Select 
               label="Satuan" 
-              value={formData.satuan} 
-              onChange={e => setFormData({...formData, satuan: e.target.value})}
-              placeholder="Contoh: Kg, Liter, Unit"
+              options={satuanOpts}
+              value={formData.id_satuan}
+              onChange={e => setFormData({...formData, id_satuan: e.target.value})}
             />
           </div>
 

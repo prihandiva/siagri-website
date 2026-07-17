@@ -63,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           namaKecamatan: user.desa?.kecamatan?.nama_kecamatan ?? null,
           namaKabupaten: user.desa?.kecamatan?.kabupaten?.nama_kabupaten ?? null,
           namaProvinsi: user.desa?.kecamatan?.kabupaten?.provinsi?.nama_provinsi ?? null,
+          nik: user.nik ?? null,
         };
       },
     }),
@@ -79,6 +80,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.namaKecamatan = (user as any).namaKecamatan;
         token.namaKabupaten = (user as any).namaKabupaten;
         token.namaProvinsi = (user as any).namaProvinsi;
+        token.nik = (user as any).nik;
       }
       return token;
     },
@@ -92,6 +94,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       (session.user as any).namaKecamatan = token.namaKecamatan;
       (session.user as any).namaKabupaten = token.namaKabupaten;
       (session.user as any).namaProvinsi = token.namaProvinsi;
+      (session.user as any).nik = token.nik;
       return session;
     },
   },

@@ -175,3 +175,29 @@ export async function deletePoktan(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function gabungkanPoktanKeGapoktan(id_poktan: string, id_gapoktan: string) {
+  try {
+    await db.mst_poktan.update({
+      where: { id_poktan: BigInt(id_poktan) },
+      data: { id_gapoktan: BigInt(id_gapoktan) },
+    });
+    revalidatePath('/master/poktan');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function keluarkanPoktanDariGapoktan(id_poktan: string) {
+  try {
+    await db.mst_poktan.update({
+      where: { id_poktan: BigInt(id_poktan) },
+      data: { id_gapoktan: null },
+    });
+    revalidatePath('/master/poktan');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

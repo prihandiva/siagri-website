@@ -50,7 +50,7 @@ export default function LaporanProduksiClient({
       'Tanggal Tanam': item.tanggal_tanam ? new Date(item.tanggal_tanam).toLocaleDateString('id-ID') : '-',
       'Tanggal Panen': item.tanggal_panen ? new Date(item.tanggal_panen).toLocaleDateString('id-ID') : '-',
       'Komoditas': item.komoditas?.nama_komoditas,
-      'Subsektor': item.komoditas?.subsektor,
+      'Subsektor': item.komoditas?.subsektor_rel?.nama_subsektor || '-',
       'Nama Petani': item.lahan?.petani?.nama_lengkap,
       'NIK': item.lahan?.petani?.nik,
       'Lokasi Lahan': `${item.lahan?.desa?.nama_desa} (Kec. ${item.lahan?.desa?.kecamatan?.nama_kecamatan})`,
