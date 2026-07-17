@@ -87,21 +87,23 @@ async function main() {
   const provinsi = await prisma.mst_provinsi.findUnique({ where: { kode_provinsi: "PRV15" } });
 
   const kabupaten = await prisma.mst_kabupaten.upsert({
-    where: { kode_kabupaten: "3507" },
+    where: { kode_kabupaten: "KAB3507" },
     update: {},
     create: {
       id_provinsi: provinsi.id_provinsi,
-      kode_kabupaten: "3507",
+      kode_kabupaten: "KAB3507",
       nama_kabupaten: "Kabupaten Banyuwangi",
+      jenis: "KABUPATEN",
+      ibukota: "Banyuwangi",
     },
   });
 
   const kecamatan = await prisma.mst_kecamatan.upsert({
-    where: { kode_kecamatan: "350726" },
+    where: { kode_kecamatan: "KEC350726" },
     update: {},
     create: {
       id_kabupaten: kabupaten.id_kabupaten,
-      kode_kecamatan: "350726",
+      kode_kecamatan: "KEC350726",
       nama_kecamatan: "Kecamatan Tegalsari",
     },
   });
@@ -117,6 +119,83 @@ async function main() {
     },
   });
   console.log(`   ✅ Contoh wilayah: ${provinsi.nama_provinsi} > ${kabupaten.nama_kabupaten} > ${kecamatan.nama_kecamatan} > ${desa.nama_desa}`);
+
+  // ─── KABUPATEN LENGKAP ────────────────────────────────
+  console.log("\n🏙️  Membuat Kabupaten/Kota...");
+  const daftarKabupaten = [
+    // Jawa Timur
+    { nama_provinsi: "Jawa Timur", kode_kabupaten: "KAB3501", nama_kabupaten: "Kabupaten Pacitan",     jenis: "KABUPATEN", ibukota: "Pacitan" },
+    { nama_provinsi: "Jawa Timur", kode_kabupaten: "KAB3502", nama_kabupaten: "Kabupaten Ponorogo",    jenis: "KABUPATEN", ibukota: "Ponorogo" },
+    // Jawa Tengah
+    { nama_provinsi: "Jawa Tengah", kode_kabupaten: "KAB3301", nama_kabupaten: "Kabupaten Cilacap",   jenis: "KABUPATEN", ibukota: "Cilacap" },
+    // Jawa Barat
+    { nama_provinsi: "Jawa Barat", kode_kabupaten: "KAB3201", nama_kabupaten: "Kabupaten Bogor",      jenis: "KABUPATEN", ibukota: "Cibinong" },
+    { nama_provinsi: "Jawa Barat", kode_kabupaten: "KAB3202", nama_kabupaten: "Kabupaten Sukabumi",   jenis: "KABUPATEN", ibukota: "Palabuhanratu" },
+  ];
+
+  for (const k of daftarKabupaten) {
+    const prov = await prisma.mst_provinsi.findFirst({ where: { nama_provinsi: k.nama_provinsi } });
+    if (!prov) { console.warn(`⚠️  Provinsi "${k.nama_provinsi}" tidak ditemukan. Skip ${k.nama_kabupaten}.`); continue; }
+    await prisma.mst_kabupaten.upsert({
+      where: { kode_kabupaten: k.kode_kabupaten },
+      update: {},
+      create: { id_provinsi: prov.id_provinsi, kode_kabupaten: k.kode_kabupaten, nama_kabupaten: k.nama_kabupaten, jenis: k.jenis, ibukota: k.ibukota, status_aktif: true },
+    });
+  }
+  console.log(`   ✅ ${daftarKabupaten.length + 1} kabupaten/kota berhasil dibuat`);
+
+  // ─── KECAMATAN LENGKAP ────────────────────────────────
+  console.log("\n🏘️  Membuat Kecamatan...");
+  const daftarKecamatan = [
+    // Kab. Banyuwangi (KAB3507) - Jawa Timur
+    { kode_kabupaten: "KAB3507", kode_kecamatan: "KEC350701", nama_kecamatan: "Kecamatan Banyuwangi" },
+    { kode_kabupaten: "KAB3507", kode_kecamatan: "KEC350726", nama_kecamatan: "Kecamatan Tegalsari" },
+
+    // Kab. Pacitan (KAB3501) - Jawa Timur
+    { kode_kabupaten: "KAB3501", kode_kecamatan: "KEC350101", nama_kecamatan: "Kecamatan Donorojo" },
+    { kode_kabupaten: "KAB3501", kode_kecamatan: "KEC350102", nama_kecamatan: "Kecamatan Pringkuku" },
+
+    // Kab. Ponorogo (KAB3502) - Jawa Timur
+    { kode_kabupaten: "KAB3502", kode_kecamatan: "KEC350201", nama_kecamatan: "Kecamatan Ngrayun" },
+    { kode_kabupaten: "KAB3502", kode_kecamatan: "KEC350202", nama_kecamatan: "Kecamatan Slahung" },
+
+    // Kab. Cilacap (KAB3301) - Jawa Tengah
+    { kode_kabupaten: "KAB3301", kode_kecamatan: "KEC330101", nama_kecamatan: "Kecamatan Dayeuhluhur" },
+    { kode_kabupaten: "KAB3301", kode_kecamatan: "KEC330102", nama_kecamatan: "Kecamatan Wanareja" },
+
+    // Kab. Bogor (KAB3201) - Jawa Barat
+    { kode_kabupaten: "KAB3201", kode_kecamatan: "KEC320101", nama_kecamatan: "Kecamatan Cibinong" },
+    { kode_kabupaten: "KAB3201", kode_kecamatan: "KEC320102", nama_kecamatan: "Kecamatan Gunung Putri" },
+
+    // Kab. Sukabumi (KAB3202) - Jawa Barat
+    { kode_kabupaten: "KAB3202", kode_kecamatan: "KEC320201", nama_kecamatan: "Kecamatan Palabuhanratu" },
+    { kode_kabupaten: "KAB3202", kode_kecamatan: "KEC320202", nama_kecamatan: "Kecamatan Cisolok" },
+  ];
+
+  for (const kec of daftarKecamatan) {
+    const kabupaten = await prisma.mst_kabupaten.findFirst({
+      where: { kode_kabupaten: kec.kode_kabupaten },
+    });
+
+    if (!kabupaten) {
+      console.warn(`⚠️  Kabupaten "${kec.kode_kabupaten}" tidak ditemukan. Skip ${kec.nama_kecamatan}.`);
+      continue;
+    }
+
+    await prisma.mst_kecamatan.upsert({
+      where: { kode_kecamatan: kec.kode_kecamatan },
+      update: {},
+      create: {
+        id_kabupaten: kabupaten.id_kabupaten,
+        kode_kecamatan: kec.kode_kecamatan,
+        nama_kecamatan: kec.nama_kecamatan,
+        jumlah_desa: null,
+        status_aktif: true,
+      },
+    });
+  }
+  console.log(`   ✅ ${daftarKecamatan.length} kecamatan berhasil dibuat`);
+
 
 
   // ─── MASTER SUBSEKTOR ──────────────────────────

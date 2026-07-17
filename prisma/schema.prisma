@@ -36,11 +36,10 @@ model mst_provinsi {
 model mst_kabupaten {
   id_kabupaten   BigInt   @id @default(autoincrement())
   id_provinsi    BigInt
-  kode_kabupaten String   @unique @db.Char(4)
+  kode_kabupaten String   @unique @db.Char(7)
   nama_kabupaten String   @db.VarChar(100)
   jenis          String   @default("KABUPATEN") @db.VarChar(15) // KABUPATEN / KOTA
   ibukota        String?  @db.VarChar(100)
-  luas_wilayah   Decimal? @db.Decimal(12, 2)
   status_aktif   Boolean  @default(true)
   created_by     BigInt?
   created_at     DateTime @default(now())
@@ -56,11 +55,8 @@ model mst_kabupaten {
 model mst_kecamatan {
   id_kecamatan   BigInt   @id @default(autoincrement())
   id_kabupaten   BigInt
-  kode_kecamatan String   @unique @db.Char(7)
+  kode_kecamatan String   @unique @db.Char(9)
   nama_kecamatan String   @db.VarChar(100)
-  ibukota        String?  @db.VarChar(100)
-  luas_wilayah   Decimal? @db.Decimal(12, 2)
-  jumlah_desa    Int?
   status_aktif   Boolean  @default(true)
   created_by     BigInt?
   created_at     DateTime @default(now())

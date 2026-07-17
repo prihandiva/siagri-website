@@ -13,9 +13,7 @@ export async function getKabupaten() {
   const data = await db.mst_kabupaten.findMany({
     where: { is_deleted: false },
     include: {
-      provinsi: {
-        select: { nama_provinsi: true }
-      }
+      provinsi: { select: { nama_provinsi: true } }
     },
     orderBy: { kode_kabupaten: 'asc' },
   });
@@ -37,7 +35,6 @@ export async function createKabupaten(data: {
   nama_kabupaten: string;
   jenis: string;
   ibukota?: string;
-  luas_wilayah?: string;
 }) {
   try {
     await db.mst_kabupaten.create({
@@ -47,16 +44,13 @@ export async function createKabupaten(data: {
         nama_kabupaten: data.nama_kabupaten,
         jenis: data.jenis,
         ibukota: data.ibukota || null,
-        luas_wilayah: data.luas_wilayah ? parseFloat(data.luas_wilayah) : null,
         status_aktif: true,
       },
     });
     revalidatePath('/master/kabupaten');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'Kode Kabupaten sudah ada.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'Kode Kabupaten sudah ada.' };
     return { success: false, error: error.message };
   }
 }
@@ -69,7 +63,6 @@ export async function updateKabupaten(
     nama_kabupaten: string;
     jenis: string;
     ibukota?: string;
-    luas_wilayah?: string;
     status_aktif: boolean;
   }
 ) {
@@ -82,16 +75,13 @@ export async function updateKabupaten(
         nama_kabupaten: data.nama_kabupaten,
         jenis: data.jenis,
         ibukota: data.ibukota || null,
-        luas_wilayah: data.luas_wilayah ? parseFloat(data.luas_wilayah) : null,
         status_aktif: data.status_aktif,
       },
     });
     revalidatePath('/master/kabupaten');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'Kode Kabupaten sudah digunakan.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'Kode Kabupaten sudah digunakan.' };
     return { success: false, error: error.message };
   }
 }

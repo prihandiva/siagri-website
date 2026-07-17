@@ -241,7 +241,7 @@ export default function ProvinsiClient({ initialData }: { initialData: any[] }) 
     <div className="p-6">
       <DataTable
         title="Master Provinsi"
-        description="Kelola data 38 provinsi di Indonesia."
+        description={`Kelola data ${data.length} provinsi di Indonesia.`}
         data={filteredData}
         columns={columns}
         onAdd={() => handleOpenForm()}

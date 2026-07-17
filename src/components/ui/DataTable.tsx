@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ChevronLeft, ChevronRight, Plus, Download, Upload } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Plus, FileText, Upload } from 'lucide-react';
 import { Button } from './Button';
 import { Input } from './Input';
 
@@ -54,8 +54,8 @@ export function DataTable<T>({
               </Button>
             )}
             {onExport && (
-              <Button variant="outline" leftIcon={<Download className="w-4 h-4" />} onClick={onExport}>
-                Export
+              <Button variant="outline" leftIcon={<FileText className="w-4 h-4 text-red-500" />} onClick={onExport}>
+                Export PDF
               </Button>
             )}
             {onAdd && (
