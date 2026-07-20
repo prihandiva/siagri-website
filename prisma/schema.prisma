@@ -72,7 +72,7 @@ model mst_kecamatan {
 model mst_desa {
   id_desa         BigInt   @id @default(autoincrement())
   id_kecamatan    BigInt
-  kode_desa       String   @unique @db.Char(10)
+  kode_desa       String   @unique @db.Char(14)
   nama_desa       String   @db.VarChar(150)
   status_desa     String   @default("DESA") @db.VarChar(15) // DESA / KELURAHAN
   klasifikasi     String?  @db.VarChar(20) // SANGAT_TERTINGGAL/TERTINGGAL/BERKEMBANG/MAJU/MANDIRI

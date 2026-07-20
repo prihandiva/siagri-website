@@ -62,7 +62,17 @@ const menuSections: MenuSection[] = [
           { href: "/master/desa",      label: "Desa / Kelurahan", icon: Map },
         ],
       },
-      { type: "item", href: "/master/komoditas", label: "Komoditas",    icon: Sprout },
+      {
+        type: "group",
+        key: "komoditas",
+        label: "Komoditas",
+        icon: Sprout,
+        children: [
+          { href: "/master/komoditas",  label: "Komoditas",  icon: Sprout },
+          { href: "/master/subsektor",  label: "Subsektor",  icon: Leaf },
+          { href: "/master/satuan",     label: "Satuan",     icon: Wheat },
+        ],
+      },
       {
         type: "group",
         key: "kelompok-tani",

@@ -109,13 +109,13 @@ async function main() {
   });
 
   const desa = await prisma.mst_desa.upsert({
-    where: { kode_desa: "3507262001" },
+    where: { kode_desa: "DES3507262001" },
     update: {},
     create: {
       id_kecamatan: kecamatan.id_kecamatan,
-      kode_desa: "3507262001",
+      kode_desa: "DES3507262001",
       nama_desa: "Desa Makmur",
-      luas_wilayah: 125.5,
+      status_desa: "DESA",
     },
   });
   console.log(`   ✅ Contoh wilayah: ${provinsi.nama_provinsi} > ${kabupaten.nama_kabupaten} > ${kecamatan.nama_kecamatan} > ${desa.nama_desa}`);
@@ -189,14 +189,63 @@ async function main() {
         id_kabupaten: kabupaten.id_kabupaten,
         kode_kecamatan: kec.kode_kecamatan,
         nama_kecamatan: kec.nama_kecamatan,
-        jumlah_desa: null,
         status_aktif: true,
       },
     });
   }
   console.log(`   ✅ ${daftarKecamatan.length} kecamatan berhasil dibuat`);
 
+  // ─── DESA LENGKAP ─────────────────────────────────────
+  console.log("\n🏡  Membuat Desa/Kelurahan...");
+  const daftarDesa = [
+    // Kec. Banyuwangi (KEC350701)
+    { kode_kecamatan: "KEC350701", kode_desa: "DES3507012001", nama_desa: "Desa Kertosari",    status_desa: "DESA" },
+    { kode_kecamatan: "KEC350701", kode_desa: "DES3507012002", nama_desa: "Desa Karangrejo",   status_desa: "DESA" },
+    // Kec. Tegalsari (KEC350726)
+    { kode_kecamatan: "KEC350726", kode_desa: "DES3507262004", nama_desa: "Desa Tegalsari",    status_desa: "DESA" },
+    { kode_kecamatan: "KEC350726", kode_desa: "DES3507262005", nama_desa: "Desa Karangdoro",   status_desa: "DESA" },
+    // Kec. Donorojo (KEC350101)
+    { kode_kecamatan: "KEC350101", kode_desa: "DES3501012001", nama_desa: "Desa Donorojo",     status_desa: "DESA" },
+    { kode_kecamatan: "KEC350101", kode_desa: "DES3501012002", nama_desa: "Desa Sendang",      status_desa: "DESA" },
+    // Kec. Pringkuku (KEC350102)
+    { kode_kecamatan: "KEC350102", kode_desa: "DES3501022001", nama_desa: "Desa Pringkuku",    status_desa: "DESA" },
+    { kode_kecamatan: "KEC350102", kode_desa: "DES3501022002", nama_desa: "Desa Watukarung",   status_desa: "DESA" },
+    // Kec. Ngrayun (KEC350201)
+    { kode_kecamatan: "KEC350201", kode_desa: "DES3502012001", nama_desa: "Desa Ngrayun",      status_desa: "DESA" },
+    { kode_kecamatan: "KEC350201", kode_desa: "DES3502012002", nama_desa: "Desa Temon",        status_desa: "DESA" },
+    // Kec. Slahung (KEC350202)
+    { kode_kecamatan: "KEC350202", kode_desa: "DES3502022001", nama_desa: "Desa Slahung",      status_desa: "DESA" },
+    { kode_kecamatan: "KEC350202", kode_desa: "DES3502022002", nama_desa: "Desa Jaguk",        status_desa: "DESA" },
+    // Kec. Dayeuhluhur (KEC330101)
+    { kode_kecamatan: "KEC330101", kode_desa: "DES3301012001", nama_desa: "Desa Dayeuhluhur",  status_desa: "DESA" },
+    { kode_kecamatan: "KEC330101", kode_desa: "DES3301012002", nama_desa: "Desa Bingkeng",     status_desa: "DESA" },
+    // Kec. Wanareja (KEC330102)
+    { kode_kecamatan: "KEC330102", kode_desa: "DES3301022001", nama_desa: "Desa Wanareja",     status_desa: "DESA" },
+    { kode_kecamatan: "KEC330102", kode_desa: "DES3301022002", nama_desa: "Desa Madusari",     status_desa: "DESA" },
+    // Kec. Cibinong (KEC320101)
+    { kode_kecamatan: "KEC320101", kode_desa: "DES3201012001", nama_desa: "Desa Pakansari",    status_desa: "DESA" },
+    { kode_kecamatan: "KEC320101", kode_desa: "DES3201012002", nama_desa: "Desa Ciriung",      status_desa: "DESA" },
+    // Kec. Gunung Putri (KEC320102)
+    { kode_kecamatan: "KEC320102", kode_desa: "DES3201022001", nama_desa: "Desa Wanaherang",   status_desa: "DESA" },
+    { kode_kecamatan: "KEC320102", kode_desa: "DES3201022002", nama_desa: "Desa Tlajung Udik", status_desa: "DESA" },
+    // Kec. Palabuhanratu (KEC320201)
+    { kode_kecamatan: "KEC320201", kode_desa: "DES3202012001", nama_desa: "Desa Palabuhanratu",status_desa: "DESA" },
+    { kode_kecamatan: "KEC320201", kode_desa: "DES3202012002", nama_desa: "Desa Citepus",      status_desa: "DESA" },
+    // Kec. Cisolok (KEC320202)
+    { kode_kecamatan: "KEC320202", kode_desa: "DES3202022001", nama_desa: "Desa Cisolok",      status_desa: "DESA" },
+    { kode_kecamatan: "KEC320202", kode_desa: "DES3202022002", nama_desa: "Desa Karangpapak",  status_desa: "DESA" },
+  ];
 
+  for (const d of daftarDesa) {
+    const kec = await prisma.mst_kecamatan.findFirst({ where: { kode_kecamatan: d.kode_kecamatan } });
+    if (!kec) { console.warn(`⚠️  Kecamatan "${d.kode_kecamatan}" tidak ditemukan. Skip ${d.nama_desa}.`); continue; }
+    await prisma.mst_desa.upsert({
+      where: { kode_desa: d.kode_desa },
+      update: {},
+      create: { id_kecamatan: kec.id_kecamatan, kode_desa: d.kode_desa, nama_desa: d.nama_desa, status_desa: d.status_desa, status_aktif: true },
+    });
+  }
+  console.log(`   ✅ ${daftarDesa.length} desa/kelurahan berhasil dibuat`);
 
   // ─── MASTER SUBSEKTOR ──────────────────────────
   console.log("\n🌿 Membuat Subsektor...");

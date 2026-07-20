@@ -14,9 +14,15 @@ export async function getDesa() {
     where: { is_deleted: false },
     include: {
       kecamatan: {
-        select: { 
+        select: {
           nama_kecamatan: true,
-          kabupaten: { select: { nama_kabupaten: true } }
+          kode_kecamatan: true,
+          kabupaten: {
+            select: {
+              nama_kabupaten: true,
+              provinsi: { select: { nama_provinsi: true } }
+            }
+          }
         }
       }
     },
@@ -28,8 +34,9 @@ export async function getDesa() {
 export async function getKecamatanOptions() {
   const data = await db.mst_kecamatan.findMany({
     where: { is_deleted: false, status_aktif: true },
-    select: { 
-      id_kecamatan: true, 
+    select: {
+      id_kecamatan: true,
+      kode_kecamatan: true,
       nama_kecamatan: true,
       kabupaten: { select: { nama_kabupaten: true } }
     },
@@ -48,6 +55,7 @@ export async function createDesa(data: {
   luas_wilayah?: string;
   jumlah_penduduk?: string;
   jumlah_kk?: string;
+  alamat_kantor?: string;
 }) {
   try {
     await db.mst_desa.create({
@@ -61,15 +69,14 @@ export async function createDesa(data: {
         luas_wilayah: data.luas_wilayah ? parseFloat(data.luas_wilayah) : null,
         jumlah_penduduk: data.jumlah_penduduk ? parseInt(data.jumlah_penduduk, 10) : null,
         jumlah_kk: data.jumlah_kk ? parseInt(data.jumlah_kk, 10) : null,
+        alamat_kantor: data.alamat_kantor || null,
         status_aktif: true,
       },
     });
     revalidatePath('/master/desa');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'Kode Desa sudah ada.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'Kode Desa sudah ada.' };
     return { success: false, error: error.message };
   }
 }
@@ -86,6 +93,7 @@ export async function updateDesa(
     luas_wilayah?: string;
     jumlah_penduduk?: string;
     jumlah_kk?: string;
+    alamat_kantor?: string;
     status_aktif: boolean;
   }
 ) {
@@ -102,15 +110,14 @@ export async function updateDesa(
         luas_wilayah: data.luas_wilayah ? parseFloat(data.luas_wilayah) : null,
         jumlah_penduduk: data.jumlah_penduduk ? parseInt(data.jumlah_penduduk, 10) : null,
         jumlah_kk: data.jumlah_kk ? parseInt(data.jumlah_kk, 10) : null,
+        alamat_kantor: data.alamat_kantor || null,
         status_aktif: data.status_aktif,
       },
     });
     revalidatePath('/master/desa');
     return { success: true };
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return { success: false, error: 'Kode Desa sudah digunakan.' };
-    }
+    if (error.code === 'P2002') return { success: false, error: 'Kode Desa sudah digunakan.' };
     return { success: false, error: error.message };
   }
 }
