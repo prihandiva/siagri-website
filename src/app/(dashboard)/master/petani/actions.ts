@@ -71,28 +71,47 @@ export async function getDesaPoktanOptions() {
 
 export async function createPetani(data: any) {
   try {
-    const newData = { ...data };
-    delete newData.id_poktan;
-    delete newData.rt;
-    delete newData.rw;
+    const hashedPw = await import('bcryptjs').then(b => b.default.hash('Petani@123', 10));
 
-    await db.mst_petani.create({
+    const petani = await db.mst_petani.create({
       data: {
-        id_desa: BigInt(newData.id_desa),
-        nik: newData.nik,
-        nama_lengkap: newData.nama_lengkap,
-        tempat_lahir: newData.tempat_lahir || null,
-        tanggal_lahir: newData.tanggal_lahir ? new Date(newData.tanggal_lahir) : null,
-        jenis_kelamin: newData.jenis_kelamin || null,
-        alamat: newData.alamat || null,
-        no_hp: newData.no_hp || null,
-        status_perkawinan: newData.status_perkawinan || null,
-        id_pendidikan: newData.id_pendidikan ? parseInt(newData.id_pendidikan, 10) : null,
-        id_pekerjaan: newData.id_pekerjaan ? parseInt(newData.id_pekerjaan, 10) : null,
-        pengalaman_tani_tahun: newData.pengalaman_tani_tahun ? parseInt(newData.pengalaman_tani_tahun, 10) : null,
+        id_desa: BigInt(data.id_desa),
+        nik: data.nik,
+        nama_lengkap: data.nama_lengkap,
+        tempat_lahir: data.tempat_lahir || null,
+        tanggal_lahir: data.tanggal_lahir ? new Date(data.tanggal_lahir) : null,
+        jenis_kelamin: data.jenis_kelamin || 'L',
+        alamat: data.alamat || null,
+        no_hp: data.no_hp || null,
+        status_perkawinan: data.status_perkawinan || null,
+        id_pendidikan: data.id_pendidikan ? parseInt(data.id_pendidikan, 10) : null,
+        id_pekerjaan: data.id_pekerjaan ? parseInt(data.id_pekerjaan, 10) : null,
+        pengalaman_tani_tahun: data.pengalaman_tani_tahun ? parseInt(data.pengalaman_tani_tahun, 10) : null,
+        status_petani: data.status_petani || 'PEMILIK',
         status_aktif: true,
       },
     });
+
+    // Auto-create akun login sys_user (username = NIK, password = Petani@123)
+    if (data.nik) {
+      const rolePetani = await db.sys_role.findFirst({ where: { kode_role: 'R009' } });
+      if (rolePetani) {
+        await db.sys_user.upsert({
+          where: { username: data.nik },
+          update: {},
+          create: {
+            id_role: rolePetani.id_role,
+            id_desa: petani.id_desa,
+            nama_lengkap: data.nama_lengkap,
+            nik: data.nik,
+            username: data.nik,
+            password: hashedPw,
+            status: 'AKTIF',
+          },
+        });
+      }
+    }
+
     revalidatePath('/master/petani');
     return { success: true };
   } catch (error: any) {
@@ -103,27 +122,23 @@ export async function createPetani(data: any) {
 
 export async function updatePetani(id: string, data: any) {
   try {
-    const newData = { ...data };
-    delete newData.id_poktan;
-    delete newData.rt;
-    delete newData.rw;
-
     await db.mst_petani.update({
       where: { id_petani: BigInt(id) },
       data: {
-        id_desa: BigInt(newData.id_desa),
-        nik: newData.nik,
-        nama_lengkap: newData.nama_lengkap,
-        tempat_lahir: newData.tempat_lahir || null,
-        tanggal_lahir: newData.tanggal_lahir ? new Date(newData.tanggal_lahir) : null,
-        jenis_kelamin: newData.jenis_kelamin || null,
-        alamat: newData.alamat || null,
-        no_hp: newData.no_hp || null,
-        status_perkawinan: newData.status_perkawinan || null,
-        id_pendidikan: newData.id_pendidikan ? parseInt(newData.id_pendidikan, 10) : null,
-        id_pekerjaan: newData.id_pekerjaan ? parseInt(newData.id_pekerjaan, 10) : null,
-        pengalaman_tani_tahun: newData.pengalaman_tani_tahun ? parseInt(newData.pengalaman_tani_tahun, 10) : null,
-        status_aktif: newData.status_aktif,
+        id_desa: BigInt(data.id_desa),
+        nik: data.nik,
+        nama_lengkap: data.nama_lengkap,
+        tempat_lahir: data.tempat_lahir || null,
+        tanggal_lahir: data.tanggal_lahir ? new Date(data.tanggal_lahir) : null,
+        jenis_kelamin: data.jenis_kelamin || 'L',
+        alamat: data.alamat || null,
+        no_hp: data.no_hp || null,
+        status_perkawinan: data.status_perkawinan || null,
+        id_pendidikan: data.id_pendidikan ? parseInt(data.id_pendidikan, 10) : null,
+        id_pekerjaan: data.id_pekerjaan ? parseInt(data.id_pekerjaan, 10) : null,
+        pengalaman_tani_tahun: data.pengalaman_tani_tahun ? parseInt(data.pengalaman_tani_tahun, 10) : null,
+        status_petani: data.status_petani || 'PEMILIK',
+        status_aktif: data.status_aktif,
       },
     });
     revalidatePath('/master/petani');

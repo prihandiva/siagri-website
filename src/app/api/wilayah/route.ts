@@ -49,6 +49,22 @@ export async function GET(request: Request) {
         });
         break;
 
+      case 'hierarchy':
+        const h_desa = searchParams.get('id_desa');
+        if (!h_desa) return NextResponse.json({ error: 'id_desa required' }, { status: 400 });
+        const desaRecord = await db.mst_desa.findUnique({
+          where: { id_desa: BigInt(h_desa) },
+          include: { kecamatan: { include: { kabupaten: true } } }
+        });
+        if (!desaRecord) return NextResponse.json({ error: 'Desa not found' }, { status: 404 });
+        
+        return NextResponse.json(serialize({
+          id_provinsi: desaRecord.kecamatan?.kabupaten?.id_provinsi,
+          id_kabupaten: desaRecord.kecamatan?.id_kabupaten,
+          id_kecamatan: desaRecord.id_kecamatan,
+          id_desa: desaRecord.id_desa
+        }));
+      
       default:
         return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
     }

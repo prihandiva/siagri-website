@@ -1,6 +1,6 @@
 import React from 'react';
 import GapoktanClient from './GapoktanClient';
-import { getGapoktan, getDesaOptions } from './actions';
+import { getGapoktan, getDesaPetaniOptions } from './actions';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function GapoktanPage() {
   const data = await getGapoktan();
-  const desaOptions = await getDesaOptions();
+  const options = await getDesaPetaniOptions();
 
-  return <GapoktanClient initialData={data} desaOptions={desaOptions} />;
+  return <GapoktanClient initialData={data} options={options} />;
 }

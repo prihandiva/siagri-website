@@ -25,6 +25,9 @@
     "recharts": "^3.9.2",
     "xlsx": "^0.18.5"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",

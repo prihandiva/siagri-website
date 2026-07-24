@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, Search } from 'lucide-react';
 
 interface MapPickerProps {
   latitude?: number | string | null;
@@ -23,6 +23,8 @@ export function MapPicker({ latitude, longitude, onChange, readOnly = false }: M
   const [latInput, setLatInput] = useState(latitude ? String(latitude) : '');
   const [lngInput, setLngInput] = useState(longitude ? String(longitude) : '');
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   const defaultLat = latitude ? parseFloat(String(latitude)) : -2.548926;
   const defaultLng = longitude ? parseFloat(String(longitude)) : 118.0148634;
@@ -149,8 +151,63 @@ export function MapPicker({ latitude, longitude, onChange, readOnly = false }: M
     });
   };
 
+  const handleSearchLocation = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon);
+        
+        if (markerRef.current && mapInstanceRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+          mapInstanceRef.current.setView([lat, lng], 15);
+        }
+        setLatInput(String(lat));
+        setLngInput(String(lng));
+        onChange(lat, lng);
+      } else {
+        alert("Lokasi tidak ditemukan");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Gagal mencari lokasi");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
+      {!readOnly && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearchLocation();
+              }
+            }}
+            placeholder="Cari nama daerah / lokasi..."
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-green-700 focus:ring-1 focus:ring-green-700"
+          />
+          <button
+            type="button"
+            onClick={handleSearchLocation}
+            disabled={isSearching}
+            className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            <Search size={16} />
+            {isSearching ? 'Mencari...' : 'Cari'}
+          </button>
+        </div>
+      )}
+
       {/* Map Container */}
       <div
         ref={mapRef}

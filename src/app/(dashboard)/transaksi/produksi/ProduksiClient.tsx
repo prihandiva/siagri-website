@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import toast from 'react-hot-toast';
 import React, { useState, useMemo, useCallback } from 'react';
@@ -42,6 +42,7 @@ export default function ProduksiClient({
   const [isVerifyOpen, setIsVerifyOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     id_lahan: '', id_komoditas: '', musim_tanam: '',
@@ -280,6 +281,8 @@ export default function ProduksiClient({
     )},
   ];
 
+  const isSubmitDisabled = !formData.id_lahan || (!selectedItem && fotoList.length === 0) || (selectedItem && fotoList.length === 0 && (!selectedItem.foto_berkala || selectedItem.foto_berkala.length === 0));
+
   return (
     <div className="p-6">
       <DataTable
@@ -293,7 +296,7 @@ export default function ProduksiClient({
       {/* FORM MODAL */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)}
         title={selectedItem ? 'Edit Data Produksi' : 'Tambah Data Produksi'} size="lg"
-        footer={<><Button variant="ghost" onClick={() => setIsFormOpen(false)}>Batal</Button><Button onClick={handleSubmit} isLoading={loading || uploadingFoto}>{uploadingFoto ? 'Mengupload Foto...' : 'Simpan'}</Button></>}
+        footer={<><Button variant="ghost" onClick={() => setIsFormOpen(false)}>Batal</Button><Button onClick={handleSubmit} isLoading={loading || uploadingFoto} disabled={isSubmitDisabled}>{uploadingFoto ? 'Mengupload Foto...' : 'Simpan'}</Button></>}
       >
         <div className="flex border-b border-gray-200 mb-5">
           {TABS.map(tab => (
@@ -553,7 +556,9 @@ export default function ProduksiClient({
                         </div>
                         <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                           <div className="flex">
-                            <img src={foto.foto_path} alt={`foto ${idx + 1}`} className="w-32 h-28 object-cover flex-shrink-0"
+                            <img src={foto.foto_path} alt={`foto ${idx + 1}`} 
+                              className="w-32 h-28 object-cover flex-shrink-0 cursor-zoom-in hover:opacity-90 transition-opacity"
+                              onClick={() => setZoomedImage(foto.foto_path)}
                               onError={e => { (e.target as HTMLImageElement).src = '/globe.svg'; }} />
                             <div className="p-3 flex-1">
                               <div className="flex items-center gap-2 mb-1">
@@ -579,6 +584,27 @@ export default function ProduksiClient({
           </div>
         )}
       </Modal>
+
+      {/* ZOOM IMAGE MODAL */}
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 cursor-zoom-out"
+          onClick={() => setZoomedImage(null)}
+        >
+          <img 
+            src={zoomedImage} 
+            alt="Zoomed" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default"
+            onClick={e => e.stopPropagation()} 
+          />
+          <button 
+            className="absolute top-6 right-6 text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors"
+            onClick={() => setZoomedImage(null)}
+          >
+            <X size={24} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

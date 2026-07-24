@@ -363,7 +363,7 @@ async function main() {
   for (const k of komoditasList) {
     await prisma.mst_komoditas.upsert({
       where: { kode_komoditas: k.kode_komoditas },
-      update: {},
+      update: { id_subsektor: k.id_subsektor, id_satuan: k.id_satuan },
       create: k,
     });
   }
@@ -438,6 +438,260 @@ async function main() {
     }
   }
   console.log(`   ✅ ${pendidikanSeed.length} pendidikan dan ${pekerjaanSeed.length} pekerjaan berhasil dibuat`);
+
+  // ─── PETANI + AKUN LOGIN ───────────────────────────
+  console.log("\n👨‍🌾  Membuat Petani & Akun Login...");
+  const ROLE_PETANI = await prisma.sys_role.findFirst({ where: { kode_role: "R009" } });
+  const hashedPetaniPw = await bcrypt.hash("Petani@123", 10);
+
+  const daftarPetani = [
+    // Kab. Banyuwangi
+    { kode_desa: "DES3507012001", nik: "3507011405780001", nama_lengkap: "Suparjo",       jenis_kelamin: "L", tempat_lahir: "Banyuwangi", tanggal_lahir: "1978-05-14", status_perkawinan: "KAWIN",       jumlah_tanggungan: 3, pengalaman_tani_tahun: 20, status_petani: "PEMILIK",   kode_pendidikan: "PD04", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3507012002", nik: "3507016309820002", nama_lengkap: "Siti Aminah",   jenis_kelamin: "P", tempat_lahir: "Banyuwangi", tanggal_lahir: "1982-09-23", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 15, status_petani: "PENGGARAP", kode_pendidikan: "PD03", nama_pekerjaan: "Buruh Tani" },
+    { kode_desa: "DES3507262004", nik: "3507261002750001", nama_lengkap: "Bambang Wijaya",jenis_kelamin: "L", tempat_lahir: "Banyuwangi", tanggal_lahir: "1975-02-10", status_perkawinan: "KAWIN",       jumlah_tanggungan: 4, pengalaman_tani_tahun: 25, status_petani: "PEMILIK",   kode_pendidikan: "PD02", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3507262005", nik: "3507264511800002", nama_lengkap: "Sri Wahyuni",   jenis_kelamin: "P", tempat_lahir: "Banyuwangi", tanggal_lahir: "1980-11-05", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 12, status_petani: "PEMILIK",   kode_pendidikan: "PD04", nama_pekerjaan: "Petani / Pekebun" },
+    // Kab. Pacitan
+    { kode_desa: "DES3501012001", nik: "3501011807760001", nama_lengkap: "Slamet Riyadi", jenis_kelamin: "L", tempat_lahir: "Pacitan",    tanggal_lahir: "1976-07-18", status_perkawinan: "KAWIN",       jumlah_tanggungan: 3, pengalaman_tani_tahun: 22, status_petani: "PEMILIK",   kode_pendidikan: "PD03", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3501012002", nik: "3501017003850002", nama_lengkap: "Tutik Handayani",jenis_kelamin:"P", tempat_lahir: "Pacitan",    tanggal_lahir: "1985-03-30", status_perkawinan: "KAWIN",       jumlah_tanggungan: 1, pengalaman_tani_tahun: 10, status_petani: "PENGGARAP", kode_pendidikan: "PD04", nama_pekerjaan: "Buruh Tani" },
+    { kode_desa: "DES3501022001", nik: "3501022208790001", nama_lengkap: "Wahyu Setiawan",jenis_kelamin: "L", tempat_lahir: "Pacitan",    tanggal_lahir: "1979-08-22", status_perkawinan: "BELUM KAWIN", jumlah_tanggungan: 0, pengalaman_tani_tahun:  8, status_petani: "PENGGARAP", kode_pendidikan: "PD04", nama_pekerjaan: "Buruh Tani" },
+    { kode_desa: "DES3501022002", nik: "3501025412830002", nama_lengkap: "Endang Lestari",jenis_kelamin: "P", tempat_lahir: "Pacitan",    tanggal_lahir: "1983-12-14", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 14, status_petani: "PEMILIK",   kode_pendidikan: "PD05", nama_pekerjaan: "Wiraswasta / Pedagang" },
+    // Kab. Ponorogo
+    { kode_desa: "DES3502012001", nik: "3502010501740001", nama_lengkap: "Agus Santoso",  jenis_kelamin: "L", tempat_lahir: "Ponorogo",   tanggal_lahir: "1974-01-05", status_perkawinan: "KAWIN",       jumlah_tanggungan: 4, pengalaman_tani_tahun: 28, status_petani: "PEMILIK",   kode_pendidikan: "PD02", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3502012002", nik: "3502015906810002", nama_lengkap: "Ratna Sari",    jenis_kelamin: "P", tempat_lahir: "Ponorogo",   tanggal_lahir: "1981-06-19", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 13, status_petani: "PENGGARAP", kode_pendidikan: "PD04", nama_pekerjaan: "Buruh Tani" },
+    { kode_desa: "DES3502022001", nik: "3502022710770001", nama_lengkap: "Hariyanto",     jenis_kelamin: "L", tempat_lahir: "Ponorogo",   tanggal_lahir: "1977-10-27", status_perkawinan: "KAWIN",       jumlah_tanggungan: 3, pengalaman_tani_tahun: 19, status_petani: "PEMILIK",   kode_pendidikan: "PD03", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3502022002", nik: "3502025104860002", nama_lengkap: "Yuni Astuti",   jenis_kelamin: "P", tempat_lahir: "Ponorogo",   tanggal_lahir: "1986-04-11", status_perkawinan: "BELUM KAWIN", jumlah_tanggungan: 0, pengalaman_tani_tahun:  6, status_petani: "PENGGARAP", kode_pendidikan: "PD06", nama_pekerjaan: "Pegawai Swasta" },
+    // Kab. Cilacap
+    { kode_desa: "DES3301012001", nik: "3301010309720001", nama_lengkap: "Waluyo",        jenis_kelamin: "L", tempat_lahir: "Cilacap",    tanggal_lahir: "1972-09-03", status_perkawinan: "KAWIN",       jumlah_tanggungan: 5, pengalaman_tani_tahun: 30, status_petani: "PEMILIK",   kode_pendidikan: "PD01", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3301012002", nik: "3301016502840002", nama_lengkap: "Sumiyati",      jenis_kelamin: "P", tempat_lahir: "Cilacap",    tanggal_lahir: "1984-02-25", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 11, status_petani: "PENGGARAP", kode_pendidikan: "PD03", nama_pekerjaan: "Buruh Tani" },
+    { kode_desa: "DES3301022001", nik: "3301021605780001", nama_lengkap: "Kusnadi",       jenis_kelamin: "L", tempat_lahir: "Cilacap",    tanggal_lahir: "1978-05-16", status_perkawinan: "KAWIN",       jumlah_tanggungan: 3, pengalaman_tani_tahun: 20, status_petani: "PEMILIK",   kode_pendidikan: "PD04", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3301022002", nik: "3301024808820002", nama_lengkap: "Rohyati",       jenis_kelamin: "P", tempat_lahir: "Cilacap",    tanggal_lahir: "1982-08-08", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 14, status_petani: "PENGGARAP", kode_pendidikan: "PD02", nama_pekerjaan: "Buruh Tani" },
+    // Kab. Bogor
+    { kode_desa: "DES3201012001", nik: "3201011211750001", nama_lengkap: "Asep Saepudin", jenis_kelamin: "L", tempat_lahir: "Bogor",      tanggal_lahir: "1975-11-12", status_perkawinan: "KAWIN",       jumlah_tanggungan: 3, pengalaman_tani_tahun: 23, status_petani: "PEMILIK",   kode_pendidikan: "PD04", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3201012002", nik: "3201016901870002", nama_lengkap: "Euis Komalasari",jenis_kelamin:"P", tempat_lahir: "Bogor",      tanggal_lahir: "1987-01-29", status_perkawinan: "KAWIN",       jumlah_tanggungan: 1, pengalaman_tani_tahun:  9, status_petani: "PENGGARAP", kode_pendidikan: "PD05", nama_pekerjaan: "Wiraswasta / Pedagang" },
+    { kode_desa: "DES3201022001", nik: "3201020706800001", nama_lengkap: "Dedi Supriadi", jenis_kelamin: "L", tempat_lahir: "Bogor",      tanggal_lahir: "1980-06-07", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 16, status_petani: "PEMILIK",   kode_pendidikan: "PD03", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3201022002", nik: "3201026103890002", nama_lengkap: "Nia Kurniasih", jenis_kelamin: "P", tempat_lahir: "Bogor",      tanggal_lahir: "1989-03-21", status_perkawinan: "BELUM KAWIN", jumlah_tanggungan: 0, pengalaman_tani_tahun:  5, status_petani: "PENGGARAP", kode_pendidikan: "PD06", nama_pekerjaan: "Pegawai Swasta" },
+    // Kab. Sukabumi
+    { kode_desa: "DES3202012001", nik: "3202011509730001", nama_lengkap: "Ujang Hidayat", jenis_kelamin: "L", tempat_lahir: "Sukabumi",   tanggal_lahir: "1973-09-15", status_perkawinan: "KAWIN",       jumlah_tanggungan: 4, pengalaman_tani_tahun: 27, status_petani: "PEMILIK",   kode_pendidikan: "PD02", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3202012002", nik: "3202014412850002", nama_lengkap: "Yeni Marlina",  jenis_kelamin: "P", tempat_lahir: "Sukabumi",   tanggal_lahir: "1985-12-04", status_perkawinan: "KAWIN",       jumlah_tanggungan: 2, pengalaman_tani_tahun: 12, status_petani: "PENGGARAP", kode_pendidikan: "PD04", nama_pekerjaan: "Buruh Tani" },
+    { kode_desa: "DES3202022001", nik: "3202022807760001", nama_lengkap: "Enjang Sutarya",jenis_kelamin: "L", tempat_lahir: "Sukabumi",   tanggal_lahir: "1976-07-28", status_perkawinan: "KAWIN",       jumlah_tanggungan: 3, pengalaman_tani_tahun: 21, status_petani: "PEMILIK",   kode_pendidikan: "PD03", nama_pekerjaan: "Petani / Pekebun" },
+    { kode_desa: "DES3202022002", nik: "3202025710880002", nama_lengkap: "Tati Suryati",  jenis_kelamin: "P", tempat_lahir: "Sukabumi",   tanggal_lahir: "1988-10-17", status_perkawinan: "BELUM KAWIN", jumlah_tanggungan: 0, pengalaman_tani_tahun:  7, status_petani: "PENGGARAP", kode_pendidikan: "PD05", nama_pekerjaan: "Lainnya" },
+  ];
+
+  let petaniCount = 0;
+  for (const p of daftarPetani) {
+    const desaPetani = await prisma.mst_desa.findFirst({ where: { kode_desa: p.kode_desa } });
+    if (!desaPetani) { console.warn(`  ⚠️  Desa ${p.kode_desa} tidak ditemukan. Skip ${p.nama_lengkap}.`); continue; }
+
+    const pendidikan = await prisma.mst_pendidikan.findFirst({ where: { kode: p.kode_pendidikan } });
+    const pekerjaan  = await prisma.mst_pekerjaan.findFirst({ where: { nama_pekerjaan: p.nama_pekerjaan } });
+
+    await prisma.mst_petani.upsert({
+      where: { nik: p.nik },
+      update: {},
+      create: {
+        id_desa: desaPetani.id_desa,
+        id_pendidikan: pendidikan?.id_pendidikan ?? null,
+        id_pekerjaan:  pekerjaan?.id_pekerjaan  ?? null,
+        nik: p.nik, nama_lengkap: p.nama_lengkap,
+        tempat_lahir: p.tempat_lahir, tanggal_lahir: new Date(p.tanggal_lahir),
+        jenis_kelamin: p.jenis_kelamin, alamat: "Dusun Krajan", rt: "001", rw: "002",
+        status_perkawinan: p.status_perkawinan,
+        jumlah_tanggungan: p.jumlah_tanggungan,
+        pengalaman_tani_tahun: p.pengalaman_tani_tahun,
+        status_petani: p.status_petani,
+        status_aktif: true,
+      },
+    });
+
+    if (ROLE_PETANI) {
+      await prisma.sys_user.upsert({
+        where: { username: p.nik },
+        update: {},
+        create: {
+          role:     { connect: { id_role: ROLE_PETANI.id_role } },
+          desa:     { connect: { id_desa: desaPetani.id_desa } },
+          nama_lengkap: p.nama_lengkap,
+          nik: p.nik,
+          username: p.nik,
+          email: `${p.nik}@petani.siagri.id`,
+          password: hashedPetaniPw,
+          status: "AKTIF",
+        },
+      });
+    }
+    petaniCount++;
+  }
+  console.log(`   ✅ ${petaniCount} petani + akun login berhasil dibuat (username = NIK, password = Petani@123)`);
+
+  // ─── KELAS POKTAN ──────────────────────────────────────
+  console.log("\n🏫  Membuat Kelas Poktan...");
+  const daftarKelas = [
+    { kode: "KLS01", nama_kelas: "Pemula", skor_minimum: 0, skor_maksimum: 250, deskripsi: "Kelas pemula" },
+    { kode: "KLS02", nama_kelas: "Lanjut", skor_minimum: 251, skor_maksimum: 500, deskripsi: "Kelas lanjut" },
+    { kode: "KLS03", nama_kelas: "Madya", skor_minimum: 501, skor_maksimum: 750, deskripsi: "Kelas madya" },
+    { kode: "KLS04", nama_kelas: "Utama", skor_minimum: 751, skor_maksimum: 1000, deskripsi: "Kelas utama" }
+  ];
+  const kelasPoktanIds = [];
+  for (const k of daftarKelas) {
+    const kls = await prisma.mst_kelas_poktan.upsert({
+      where: { kode: k.kode },
+      update: {},
+      create: k
+    });
+    kelasPoktanIds.push(kls.id_kelas);
+  }
+  console.log(`   ✅ ${kelasPoktanIds.length} kelas poktan berhasil dibuat`);
+
+  // ─── GAPOKTAN & POKTAN ───────────────────────────────
+  console.log("\n🤝  Membuat Gapoktan & Poktan...");
+  const dataPerDesa = [
+    { kode_desa: "DES3507012001", nama_desa: "Kertosari", punya_gapoktan: true, poktan: ["Poktan Sumber Makmur", "Poktan Tani Jaya"], nik_petani: "3507011405780001" },
+    { kode_desa: "DES3507012002", nama_desa: "Karangrejo", punya_gapoktan: false, poktan: ["Poktan Sido Mulyo", "Poktan Karya Tani"], nik_petani: "3507016309820002" },
+    { kode_desa: "DES3507262004", nama_desa: "Tegalsari", punya_gapoktan: true, poktan: ["Poktan Subur Jaya", "Poktan Mekar Sari"], nik_petani: "3507261002750001" },
+    { kode_desa: "DES3507262005", nama_desa: "Karangdoro", punya_gapoktan: false, poktan: ["Poktan Rukun Tani", "Poktan Berkah Tani"], nik_petani: "3507264511800002" },
+    { kode_desa: "DES3501012001", nama_desa: "Donorojo", punya_gapoktan: true, poktan: ["Poktan Sumber Rejeki", "Poktan Tani Makmur"], nik_petani: "3501011807760001" },
+    { kode_desa: "DES3501012002", nama_desa: "Sendang", punya_gapoktan: false, poktan: ["Poktan Sido Rukun", "Poktan Karya Mandiri"], nik_petani: "3501017003850002" },
+    { kode_desa: "DES3501022001", nama_desa: "Pringkuku", punya_gapoktan: true, poktan: ["Poktan Subur Makmur", "Poktan Mekar Tani"], nik_petani: "3501022208790001" },
+    { kode_desa: "DES3501022002", nama_desa: "Watukarung", punya_gapoktan: false, poktan: ["Poktan Rukun Makmur", "Poktan Berkah Jaya"], nik_petani: "3501025412830002" },
+    { kode_desa: "DES3502012001", nama_desa: "Ngrayun", punya_gapoktan: true, poktan: ["Poktan Sumber Tani", "Poktan Jaya Makmur"], nik_petani: "3502010501740001" },
+    { kode_desa: "DES3502012002", nama_desa: "Temon", punya_gapoktan: false, poktan: ["Poktan Sido Makmur", "Poktan Karya Jaya"], nik_petani: "3502015906810002" },
+    { kode_desa: "DES3502022001", nama_desa: "Slahung", punya_gapoktan: true, poktan: ["Poktan Subur Tani", "Poktan Mekar Jaya"], nik_petani: "3502022710770001" },
+    { kode_desa: "DES3502022002", nama_desa: "Jaguk", punya_gapoktan: false, poktan: ["Poktan Rukun Jaya", "Poktan Berkah Makmur"], nik_petani: "3502025104860002" },
+    { kode_desa: "DES3301012001", nama_desa: "Dayeuhluhur", punya_gapoktan: true, poktan: ["Poktan Sumber Jaya", "Poktan Tani Mandiri"], nik_petani: "3301010309720001" },
+    { kode_desa: "DES3301012002", nama_desa: "Bingkeng", punya_gapoktan: false, poktan: ["Poktan Sido Jaya", "Poktan Karya Rejeki"], nik_petani: "3301016502840002" },
+    { kode_desa: "DES3301022001", nama_desa: "Wanareja", punya_gapoktan: true, poktan: ["Poktan Subur Rejeki", "Poktan Mekar Makmur"], nik_petani: "3301021605780001" },
+    { kode_desa: "DES3301022002", nama_desa: "Madusari", punya_gapoktan: false, poktan: ["Poktan Rukun Sentosa", "Poktan Berkah Sejahtera"], nik_petani: "3301024808820002" },
+    { kode_desa: "DES3201012001", nama_desa: "Pakansari", punya_gapoktan: true, poktan: ["Poktan Sumber Sejahtera", "Poktan Tani Sejahtera"], nik_petani: "3201011211750001" },
+    { kode_desa: "DES3201012002", nama_desa: "Ciriung", punya_gapoktan: false, poktan: ["Poktan Sido Sejahtera", "Poktan Karya Sentosa"], nik_petani: "3201016901870002" },
+    { kode_desa: "DES3201022001", nama_desa: "Wanaherang", punya_gapoktan: true, poktan: ["Poktan Subur Sentosa", "Poktan Mekar Sentosa"], nik_petani: "3201020706800001" },
+    { kode_desa: "DES3201022002", nama_desa: "Tlajung Udik", punya_gapoktan: false, poktan: ["Poktan Rukun Sejahtera", "Poktan Berkah Sentosa"], nik_petani: "3201026103890002" },
+    { kode_desa: "DES3202012001", nama_desa: "Palabuhanratu", punya_gapoktan: true, poktan: ["Poktan Sumber Bahari", "Poktan Tani Bahari"], nik_petani: "3202011509730001" },
+    { kode_desa: "DES3202012002", nama_desa: "Citepus", punya_gapoktan: false, poktan: ["Poktan Sido Bahari", "Poktan Karya Bahari"], nik_petani: "3202014412850002" },
+    { kode_desa: "DES3202022001", nama_desa: "Cisolok", punya_gapoktan: true, poktan: ["Poktan Subur Nelayan", "Poktan Mekar Nelayan"], nik_petani: "3202022807760001" },
+    { kode_desa: "DES3202022002", nama_desa: "Karangpapak", punya_gapoktan: false, poktan: ["Poktan Rukun Nelayan", "Poktan Berkah Nelayan"], nik_petani: "3202025710880002" },
+  ];
+
+  let gapoktanSeq = 0;
+  let poktanSeq = 0;
+
+  for (const d of dataPerDesa) {
+    const desa = await prisma.mst_desa.findFirst({ where: { kode_desa: d.kode_desa } });
+    if (!desa) { console.warn(`⚠️  Desa "${d.kode_desa}" tidak ditemukan. Skip.`); continue; }
+
+    let gapoktanId = null;
+    if (d.punya_gapoktan) {
+      gapoktanSeq++;
+      const kodeGapoktan = `GPK${String(gapoktanSeq).padStart(3, "0")}`;
+      const gapoktan = await prisma.mst_gapoktan.upsert({
+        where: { kode_gapoktan: kodeGapoktan },
+        update: {
+          nomor_registrasi: `REG-${kodeGapoktan}`,
+          tanggal_berdiri: new Date('2015-01-01'),
+          ketua: `Bapak Ketua Gapoktan ${d.nama_desa}`,
+          sekretaris: `Sekretaris Gapoktan ${d.nama_desa}`,
+          bendahara: `Bendahara Gapoktan ${d.nama_desa}`,
+          alamat: `Jalan Raya Pertanian Desa ${d.nama_desa}`,
+          nomor_hp: `0812${Math.floor(10000000 + Math.random() * 90000000)}`,
+          email: `gapoktan.${d.nama_desa.toLowerCase().replace(/\\s/g, '')}@siagri.id`,
+        },
+        create: {
+          id_desa: desa.id_desa,
+          kode_gapoktan: kodeGapoktan,
+          nama_gapoktan: `Gapoktan ${d.nama_desa} Bersatu`,
+          nomor_registrasi: `REG-${kodeGapoktan}`,
+          tanggal_berdiri: new Date('2015-01-01'),
+          ketua: `Bapak Ketua Gapoktan ${d.nama_desa}`,
+          sekretaris: `Sekretaris Gapoktan ${d.nama_desa}`,
+          bendahara: `Bendahara Gapoktan ${d.nama_desa}`,
+          alamat: `Jalan Raya Pertanian Desa ${d.nama_desa}`,
+          nomor_hp: `0812${Math.floor(10000000 + Math.random() * 90000000)}`,
+          email: `gapoktan.${d.nama_desa.toLowerCase().replace(/\\s/g, '')}@siagri.id`,
+          status_aktif: true,
+        },
+      });
+      gapoktanId = gapoktan.id_gapoktan;
+    }
+
+    const poktanIds = [];
+    for (let i = 0; i < d.poktan.length; i++) {
+      poktanSeq++;
+      const kodePoktan = `PKT${String(poktanSeq).padStart(3, "0")}`;
+      const poktan = await prisma.mst_poktan.upsert({
+        where: { kode_poktan: kodePoktan },
+        update: {
+          nomor_registrasi: `REG-${kodePoktan}`,
+          tanggal_berdiri: new Date('2016-06-15'),
+          alamat: `Dusun Utama, Desa ${d.nama_desa}`,
+          luas_total_lahan: Math.floor(10 + Math.random() * 40) + 0.5,
+          latitude: -8.0 + (Math.random() * 0.5),
+          longitude: 114.0 + (Math.random() * 0.5),
+          id_kelas: kelasPoktanIds.length ? kelasPoktanIds[Math.floor(Math.random() * kelasPoktanIds.length)] : null,
+        },
+        create: {
+          id_gapoktan: gapoktanId,
+          id_desa: desa.id_desa,
+          id_kelas: kelasPoktanIds.length ? kelasPoktanIds[Math.floor(Math.random() * kelasPoktanIds.length)] : null,
+          kode_poktan: kodePoktan,
+          nama_poktan: d.poktan[i],
+          nomor_registrasi: `REG-${kodePoktan}`,
+          tanggal_berdiri: new Date('2016-06-15'),
+          alamat: `Dusun Utama, Desa ${d.nama_desa}`,
+          luas_total_lahan: Math.floor(10 + Math.random() * 40) + 0.5,
+          latitude: -8.0 + (Math.random() * 0.5),
+          longitude: 114.0 + (Math.random() * 0.5),
+          status_poktan: "AKTIF",
+          jumlah_anggota: 0,
+          status_aktif: true,
+        },
+      });
+      poktanIds.push(poktan.id_poktan);
+
+      // Create Ketua for each Poktan
+      const existingKetua = await prisma.mst_pengurus_poktan.findFirst({
+        where: { id_poktan: poktan.id_poktan, jabatan: 'Ketua' }
+      });
+      if (!existingKetua) {
+        await prisma.mst_pengurus_poktan.create({
+          data: {
+            id_poktan: poktan.id_poktan,
+            nama: `Ketua ${d.poktan[i]}`,
+            jabatan: 'Ketua',
+            aktif: true
+          }
+        });
+      }
+    }
+
+    const petani = await prisma.mst_petani.findFirst({ where: { nik: d.nik_petani } });
+    if (petani && poktanIds.length > 0) {
+      const poktanUtamaId = poktanIds[0];
+      await prisma.mst_petani.update({
+        where: { id_petani: petani.id_petani },
+        data: { id_poktan: poktanUtamaId },
+      });
+      
+      const existingAnggota = await prisma.mst_anggota_poktan.findFirst({
+        where: { id_poktan: poktanUtamaId, id_petani: petani.id_petani }
+      });
+      
+      if (!existingAnggota) {
+        await prisma.mst_anggota_poktan.create({
+          data: {
+            id_poktan: poktanUtamaId,
+            id_petani: petani.id_petani,
+            status: "AKTIF"
+          }
+        });
+      }
+
+      await prisma.mst_poktan.update({
+        where: { id_poktan: poktanUtamaId },
+        data: { jumlah_anggota: { increment: 1 } },
+      });
+    }
+  }
+
+  console.log(`   ✅ Selesai membuat ${gapoktanSeq} gapoktan dan ${poktanSeq} poktan, petani tersambung ke poktan.`);
 
   console.log("\n✨ Seeding selesai!\n");
 }

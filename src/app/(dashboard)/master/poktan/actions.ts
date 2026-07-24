@@ -21,6 +21,9 @@ export async function getPoktan() {
       },
       pengurus: {
         where: { jabatan: 'Ketua', is_deleted: false, aktif: true }
+      },
+      kelas: {
+        select: { nama_kelas: true }
       }
     },
     orderBy: { nama_poktan: 'asc' },
@@ -29,7 +32,8 @@ export async function getPoktan() {
   const formattedData = data.map(item => ({
     ...item,
     id_ketua: item.pengurus[0]?.id_petani || '',
-    ketua_poktan: item.pengurus[0]?.nama || ''
+    ketua_poktan: item.pengurus[0]?.nama || '',
+    kelas_kemampuan: item.kelas?.nama_kelas || item.id_kelas?.toString() || ''
   }));
 
   return serialize(formattedData);
@@ -56,7 +60,17 @@ export async function getDesaGapoktanOptions() {
     orderBy: { nama_gapoktan: 'asc' },
   });
 
-  return serialize({ desa: desaData, gapoktan: gapoktanData });
+  const petaniData = await db.mst_petani.findMany({
+    where: { is_deleted: false, status_aktif: true },
+    select: { id_petani: true, nama_lengkap: true, nik: true, id_desa: true },
+    orderBy: { nama_lengkap: 'asc' }
+  });
+
+  const kelasData = await db.mst_kelas_poktan.findMany({
+    orderBy: { skor_minimum: 'asc' }
+  });
+
+  return serialize({ desa: desaData, gapoktan: gapoktanData, petani: petaniData, kelas: kelasData });
 }
 
 export async function createPoktan(data: {
@@ -74,6 +88,7 @@ export async function createPoktan(data: {
       data: {
         id_desa: BigInt(data.id_desa),
         id_gapoktan: data.id_gapoktan ? BigInt(data.id_gapoktan) : null,
+        id_kelas: data.kelas_kemampuan ? parseInt(data.kelas_kemampuan) : null,
         kode_poktan: data.kode_poktan,
         nama_poktan: data.nama_poktan,
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
@@ -122,6 +137,7 @@ export async function updatePoktan(
       data: {
         id_desa: BigInt(data.id_desa),
         id_gapoktan: data.id_gapoktan ? BigInt(data.id_gapoktan) : null,
+        id_kelas: data.kelas_kemampuan ? parseInt(data.kelas_kemampuan) : null,
         kode_poktan: data.kode_poktan,
         nama_poktan: data.nama_poktan,
         tanggal_berdiri: data.tahun_berdiri ? new Date(`${data.tahun_berdiri}-01-01`) : null,
