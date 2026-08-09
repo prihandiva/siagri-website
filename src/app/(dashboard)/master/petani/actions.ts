@@ -105,6 +105,7 @@ export async function createPetani(data: any) {
             nama_lengkap: data.nama_lengkap,
             nik: data.nik,
             username: data.nik,
+            email: `${data.nik}@petani.siagri.id`,
             password: hashedPw,
             status: 'AKTIF',
           },

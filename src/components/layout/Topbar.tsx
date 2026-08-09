@@ -1,17 +1,15 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Bell, ChevronDown, MapPin, LogOut, Clock, Menu } from "lucide-react";
+import { Bell, ChevronDown, MapPin, LogOut, Clock, Menu, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useDashboardFilter, FilterType } from "@/context/DashboardFilterContext";
 
-// Daftar wilayah dummy (nanti bisa di-fetch dari API/DB)
-const DESA_OPTIONS = [
-  { value: "", label: "Semua Wilayah" },
-  { value: "desa-makmur", label: "Desa Makmur" },
-  { value: "desa-sejahtera", label: "Desa Sejahtera" },
-  { value: "desa-maju", label: "Desa Maju" },
-];
+interface WilayahOption {
+  id: string;
+  label: string;
+}
 
 function useWaktuIndonesia() {
   const [waktu, setWaktu] = useState<string>("");
@@ -46,17 +44,49 @@ function useWaktuIndonesia() {
 
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession();
-  const [selectedDesa, setSelectedDesa] = useState("");
+  const { filter, setFilter } = useDashboardFilter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { waktu, tanggal } = useWaktuIndonesia();
 
+  // Wilayah dropdown state
+  const [wilayahOptions, setWilayahOptions] = useState<WilayahOption[]>([]);
+  const [dropdownType, setDropdownType] = useState<string>("");
+  const [isLoadingWilayah, setIsLoadingWilayah] = useState(true);
+  const [selectedWilayah, setSelectedWilayah] = useState<string>("");
+
+  const user = session?.user as any;
+  const role: string = user?.role ?? "";
+
+  // ── Fetch wilayah options based on role ──
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
+    if (!session) return;
+    setIsLoadingWilayah(true);
+    fetch("/api/dashboard/wilayah-options")
+      .then((r) => r.json())
+      .then((data) => {
+        setDropdownType(data.dropdownType ?? "");
+        setWilayahOptions(data.options ?? []);
+
+        // Auto-select for Admin Desa (R005) — disabled dropdown
+        if (role === "R005" && data.options?.length === 1) {
+          const opt = data.options[0];
+          setSelectedWilayah(opt.id);
+          setFilter({ filterId: opt.id, filterType: "desa", filterLabel: opt.label });
+        }
+      })
+      .catch(() => toast.error("Gagal memuat opsi wilayah"))
+      .finally(() => setIsLoadingWilayah(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setIsDropdownOpen(false);
     }
+  };
+
+  useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -67,7 +97,36 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
     await signOut({ callbackUrl: "/login" });
   };
 
-  const user = session?.user as any;
+  const handleWilayahChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedWilayah(val);
+
+    if (val === "") {
+      // "Semua" option selected
+      setFilter({ filterId: null, filterType: "nasional", filterLabel: "Semua Wilayah" });
+    } else {
+      const opt = wilayahOptions.find((o) => o.id === val);
+      setFilter({
+        filterId: val,
+        filterType: dropdownType as FilterType,
+        filterLabel: opt?.label ?? val,
+      });
+    }
+  };
+
+  // Label for the dropdown placeholder/all option
+  const allLabel = (() => {
+    switch (dropdownType) {
+      case "provinsi":   return "Semua Provinsi";
+      case "kabupaten":  return "Semua Kabupaten";
+      case "kecamatan":  return "Semua Kecamatan";
+      case "desa":       return "Semua Desa";
+      default:           return "Semua Wilayah";
+    }
+  })();
+
+  // Whether the dropdown should be disabled (Admin Desa or unknown role)
+  const isDisabled = role === "R005" || wilayahOptions.length === 0;
 
   return (
     <header className="topbar">
@@ -79,13 +138,18 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         <Menu size={20} />
       </button>
 
-      {/* Filter Wilayah / Desa */}
+      {/* ── Filter Wilayah Dropdown ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <MapPin size={15} style={{ color: "var(--primary-700)", flexShrink: 0 }} />
+        {isLoadingWilayah ? (
+          <Loader2 size={15} style={{ color: "var(--primary-700)", animation: "spin 1s linear infinite" }} />
+        ) : (
+          <MapPin size={15} style={{ color: "var(--primary-700)", flexShrink: 0 }} />
+        )}
         <select
-          id="topbar-filter-desa"
-          value={selectedDesa}
-          onChange={(e) => setSelectedDesa(e.target.value)}
+          id="topbar-filter-wilayah"
+          value={selectedWilayah}
+          onChange={handleWilayahChange}
+          disabled={isDisabled || isLoadingWilayah}
           style={{
             padding: "0.5rem 1rem",
             borderRadius: "var(--radius-full)",
@@ -94,13 +158,18 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
             fontSize: "0.8125rem",
             fontWeight: 500,
             color: "var(--primary-800)",
-            cursor: "pointer",
+            cursor: isDisabled ? "not-allowed" : "pointer",
             outline: "none",
-            minWidth: "160px",
+            minWidth: "180px",
+            opacity: isDisabled ? 0.7 : 1,
           }}
         >
-          {DESA_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+          {/* "Semua" option — hidden for Admin Desa */}
+          {role !== "R005" && (
+            <option value="">{allLabel}</option>
+          )}
+          {wilayahOptions.map((opt) => (
+            <option key={opt.id} value={opt.id}>
               {opt.label}
             </option>
           ))}

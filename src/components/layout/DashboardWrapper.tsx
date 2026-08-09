@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { DashboardFilterProvider } from "@/context/DashboardFilterContext";
 
 export default function DashboardWrapper({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -15,23 +16,23 @@ export default function DashboardWrapper({ children }: { children: React.ReactNo
   }, [pathname]);
 
   return (
-    <div className="layout-wrapper">
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
-      
-      {/* Overlay untuk mobile saat sidebar terbuka */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-      
-      <div className="main-content">
-        <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="page-content animate-fade-in">
-          {children}
-        </main>
+    <DashboardFilterProvider>
+      <div className="layout-wrapper">
+        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+
+        {/* Overlay untuk mobile saat sidebar terbuka */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        <div className="main-content">
+          <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
+          <main className="page-content animate-fade-in">{children}</main>
+        </div>
       </div>
-    </div>
+    </DashboardFilterProvider>
   );
 }

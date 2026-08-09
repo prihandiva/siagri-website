@@ -58,12 +58,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role.kode_role,
           roleName: user.role.nama_role,
           level: 1, // Fallback level since no level on sys_role
+          // Direct territory IDs from sys_user columns
+          idProvinsi: user.id_provinsi ? String(user.id_provinsi) : null,
+          idKabupaten: user.id_kabupaten ? String(user.id_kabupaten) : null,
+          idKecamatan: user.id_kecamatan ? String(user.id_kecamatan) : null,
           idDesa: user.id_desa ? String(user.id_desa) : null,
+          // Territory names derived from desa relation chain
           namaDesa: user.desa?.nama_desa ?? null,
           namaKecamatan: user.desa?.kecamatan?.nama_kecamatan ?? null,
           namaKabupaten: user.desa?.kecamatan?.kabupaten?.nama_kabupaten ?? null,
           namaProvinsi: user.desa?.kecamatan?.kabupaten?.provinsi?.nama_provinsi ?? null,
-          nik: user.nik ?? null,
+          nik: user.nik ?? undefined,
         };
       },
     }),
@@ -75,6 +80,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = (user as any).role;
         token.roleName = (user as any).roleName;
         token.level = (user as any).level;
+        token.idProvinsi = (user as any).idProvinsi;
+        token.idKabupaten = (user as any).idKabupaten;
+        token.idKecamatan = (user as any).idKecamatan;
         token.idDesa = (user as any).idDesa;
         token.namaDesa = (user as any).namaDesa;
         token.namaKecamatan = (user as any).namaKecamatan;
@@ -89,6 +97,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       (session.user as any).role = token.role;
       (session.user as any).roleName = token.roleName;
       (session.user as any).level = token.level;
+      (session.user as any).idProvinsi = token.idProvinsi;
+      (session.user as any).idKabupaten = token.idKabupaten;
+      (session.user as any).idKecamatan = token.idKecamatan;
       (session.user as any).idDesa = token.idDesa;
       (session.user as any).namaDesa = token.namaDesa;
       (session.user as any).namaKecamatan = token.namaKecamatan;

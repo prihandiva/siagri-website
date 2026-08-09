@@ -1,0 +1,62 @@
+﻿
+> siagri-website@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.2.10 (Turbopack)
+- Environments: .env.local, .env
+
+npm : ΓÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: 
+https://nextjs.org/docs/messages/middleware-to-proxy
+At line:1 char:1
++ npm run build 2>&1 | Out-File -FilePath "build_output.txt" -Encoding  ...
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá The "middle...leware-to-proxy:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 23.9s
+  Running TypeScript ...
+  Finished TypeScript in 18.5s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/28) ...
+  Generating static pages using 7 workers (7/28) 
+  Generating static pages using 7 workers (14/28) 
+  Generating static pages using 7 workers (21/28) 
+Γ£ô Generating static pages using 7 workers (28/28) in 1003ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî ╞Æ /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/dashboard
+Γö£ ╞Æ /api/dashboard/wilayah-options
+Γö£ ╞Æ /api/petani
+Γö£ ╞Æ /api/upload/produksi-foto
+Γö£ ╞Æ /api/wilayah
+Γö£ ╞Æ /laporan/produksi
+Γö£ Γùï /login
+Γö£ ╞Æ /master/desa
+Γö£ ╞Æ /master/gapoktan
+Γö£ ╞Æ /master/kabupaten
+Γö£ ╞Æ /master/kecamatan
+Γö£ ╞Æ /master/komoditas
+Γö£ ╞Æ /master/lahan
+Γö£ ╞Æ /master/penyuluh
+Γö£ ╞Æ /master/petani
+Γö£ ╞Æ /master/poktan
+Γö£ ╞Æ /master/provinsi
+Γö£ ╞Æ /master/satuan
+Γö£ ╞Æ /master/subsektor
+Γö£ ╞Æ /pengaturan/pengguna
+Γö£ ╞Æ /pengaturan/role
+Γö£ ╞Æ /transaksi/bantuan
+Γö£ ╞Æ /transaksi/pemasaran
+Γöö ╞Æ /transaksi/produksi
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

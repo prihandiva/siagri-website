@@ -21,7 +21,7 @@ export async function getPemasaran() {
           desa: { select: { nama_desa: true, kecamatan: { select: { nama_kecamatan: true } } } }
         }
       },
-      komoditas: { select: { nama_komoditas: true, satuan: true } }
+      komoditas: { select: { nama_komoditas: true, satuan_rel: { select: { nama_satuan: true, simbol: true } } } }
     },
     orderBy: { tanggal: 'desc' },
   });
@@ -43,7 +43,7 @@ export async function getPemasaranOptions() {
 
   const komoditasData = await db.mst_komoditas.findMany({
     where: { is_deleted: false, status_aktif: true },
-    select: { id_komoditas: true, nama_komoditas: true, satuan: true },
+    select: { id_komoditas: true, nama_komoditas: true, satuan_rel: { select: { nama_satuan: true, simbol: true } } },
     orderBy: { nama_komoditas: 'asc' },
   });
 

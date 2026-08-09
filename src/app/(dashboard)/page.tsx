@@ -15,6 +15,10 @@ export default async function DashboardPage() {
     ? `${user.namaDesa}, ${user.namaKecamatan}`
     : user?.namaKecamatan
     ? user.namaKecamatan
+    : user?.namaKabupaten
+    ? user.namaKabupaten
+    : user?.namaProvinsi
+    ? user.namaProvinsi
     : "Semua Wilayah";
 
   const jamSapaan = () => {
